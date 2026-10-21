@@ -181,6 +181,9 @@ section{padding:64px 0}
 footer{border-top:1px solid var(--line);padding:34px 0;text-align:center;color:var(--muted);font-size:13px}
 footer .mark{width:64px;height:64px;margin-bottom:12px}
 footer .mark span{font-size:34px}
+.admin-link{display:inline-flex;align-items:center;gap:6px;margin-top:14px;color:var(--muted);text-decoration:none;font-size:12px;letter-spacing:.08em;text-transform:uppercase;border:1px solid var(--line);border-radius:999px;padding:6px 12px}
+.admin-link:hover{color:var(--ink);border-color:var(--ink)}
+.admin-link svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:1.8}
 
 /* ---------- Cart drawer ---------- */
 .overlay{position:fixed;inset:0;background:rgba(20,20,20,.45);opacity:0;pointer-events:none;transition:.25s;z-index:60}
@@ -260,7 +263,7 @@ form.co input:focus,form.co select:focus,form.co textarea:focus{outline:none;bor
 </header>
 
 <div class="notice" id="top">
-  <div class="wrap"><b>Holiday Packages</b> are back — available every day. Advance booking required.</div>
+  <div class="wrap"><b id="noticeTitle">Holiday Packages</b> <span id="noticeText">are back — available every day. Advance booking required.</span></div>
 </div>
 
 <section class="hero">
@@ -305,7 +308,7 @@ form.co input:focus,form.co select:focus,form.co textarea:focus{outline:none;bor
     </div>
     <div class="tabs" id="tabs"></div>
     <div id="menuRoot"></div>
-    <p class="fine">Prices exclude delivery charges. Chafing dish rental is charged separately. Pricing is subject to change based on availability.</p>
+    <p class="fine" id="footnote">Prices exclude delivery charges. Chafing dish rental is charged separately. Pricing is subject to change based on availability.</p>
   </div>
 </section>
 
@@ -341,6 +344,7 @@ form.co input:focus,form.co select:focus,form.co textarea:focus{outline:none;bor
   <div class="mark"><span>Febys</span></div>
   <div>Great tasting food at a great price.</div>
   <div style="margin-top:6px">© <span id="yr"></span> Febys · Dubai, UAE</div>
+  <a class="admin-link" href="admin.html" rel="nofollow"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Admin login</a>
 </footer>
 
 <a class="fab" href="https://wa.me/971563267346" target="_blank" rel="noopener" aria-label="WhatsApp Febys">
@@ -357,12 +361,14 @@ form.co input:focus,form.co select:focus,form.co textarea:focus{outline:none;bor
 
 <script>
 /* ============================================================
-   MENU DATA — edit items, prices and photos here.
-   photo: put an image path/URL to replace the placeholder.
-   price: null = "price on request" (sent as an inquiry).
+   MENU DATA — managed in admin.html (stored in Supabase).
+   The list below is only a fallback, shown if the live menu
+   can't be loaded (e.g. no internet).
    ============================================================ */
-const WHATSAPP = "971563267346";
-const MENU = [
+const SUPABASE_URL = "https://ntohdxudxfggsmhxhvho.supabase.co";
+const SUPABASE_KEY = "sb_publishable_81P5_TSD4SuHALFDM4Ao-w_W7C5UkuI";
+let WHATSAPP = "971563267346";
+let MENU = [
   { id:"combos", name:"Holiday Combos", note:"Bundles for gatherings", items:[
     { id:"c1", name:"Combo 1", price:180, tone:"g2", list:["1 kilo Lechon Kawali / Crispy Pata","Feby's Fried Chicken","Shanghai (30 pcs)"] },
     { id:"c2", name:"Combo 2", price:250, tone:"g2", list:["1 kilo Lechon Roll","1 kilo Lechon Kawali / Crispy Pata","Feby's Fried Chicken","Shanghai (30 pcs)"] },
@@ -573,6 +579,42 @@ buildParade();
 
 $("#yr").textContent = new Date().getFullYear();
 renderMenu(); updateCount();
+
+/* ---------- live menu from the admin ---------- */
+async function loadLiveMenu(){
+  const get = path => fetch(`${SUPABASE_URL}/rest/v1/${path}`, { headers:{ apikey:SUPABASE_KEY, "Accept-Profile":"febys" } })
+                        .then(r => r.ok ? r.json() : Promise.reject(new Error(r.status)));
+  try{
+    const [cats, items, settings] = await Promise.all([
+      get("categories?select=id,name,note,sort&active=eq.true&order=sort,id"),
+      get("menu_items?select=*&active=eq.true&order=sort,id"),
+      get("settings?select=*&id=eq.1")
+    ]);
+    const live = cats.map(c => ({
+      id: "c" + c.id, name: c.name, note: c.note || "",
+      items: items.filter(i => i.category_id === c.id).map(i => ({
+        id: "i" + i.id, name: i.name, pax: i.pax, badge: i.badge, tone: i.tone,
+        desc: i.description, photo: i.photo_url,
+        list: i.includes && i.includes.length ? i.includes : null,
+        price: i.price == null ? null : Number(i.price),
+        variants: i.variants && i.variants.length ? i.variants.map(v => ({ ...v, price: Number(v.price) })) : null
+      }))
+    })).filter(c => c.items.length);
+    if(live.length){ MENU = live; renderMenu(); }
+    const st = settings[0];
+    if(st){
+      $("#top").style.display = st.notice_on ? "" : "none";
+      $("#noticeTitle").textContent = st.notice_title;
+      $("#noticeText").textContent = st.notice_text;
+      $("#footnote").textContent = st.footnote;
+      if(st.whatsapp && st.whatsapp !== WHATSAPP){
+        document.querySelectorAll('a[href*="wa.me/"]').forEach(a => a.href = a.href.replace(/wa\.me\/\d+/, "wa.me/" + st.whatsapp));
+        WHATSAPP = st.whatsapp;
+      }
+    }
+  }catch(e){ console.warn("Live menu unavailable, showing built-in menu.", e); }
+}
+loadLiveMenu();
 </script>
 </body>
 </html>
