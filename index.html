@@ -545,7 +545,6 @@ function renderCart(){
   + `<div class="sum">
       <div><span>Items</span><span>${count}</span></div>
       ${onRequest?`<div class="muted"><span>${onRequest} dish${onRequest>1?"es":""} priced on request</span><span>confirmed on WhatsApp</span></div>`:""}
-      <div class="muted"><span>Delivery</span><span>confirmed on WhatsApp</span></div>
     </div>`;
   $("#dFoot").innerHTML = `
     <div class="tot"><span>${hasEstimates()?"Estimated subtotal":"Subtotal"}</span><b>${fmt(total())}</b></div>
