@@ -539,10 +539,10 @@ function renderCheckout(){
 function foodEmoji(name, cat){
   const t = (name+" "+cat).toLowerCase();
   const map = [
-    [/cochinillo|lechon ulo/,"🐷"],[/lechon|crispy pata|kawali|pork belly|belly roll/,"🥓"],[/bbq|barbecue|skewer/,"🍢"],
-    [/chicken|cordon/,"🍗"],[/lumpia|shanghai|spring roll/,"🥟"],[/sisig/,"🔥"],[/kare|kaldereta|stew|sinigang|adobo/,"🍲"],
-    [/pancit|noodle|pasta|bihon|canton/,"🍜"],[/kakanin|flan|dessert|cake|leche|halo/,"🍮"],[/rice|sinangag/,"🍚"],
-    [/fish|bangus|seafood|shrimp/,"🐟"],[/salad|veg|chopsuey/,"🥗"],[/combo|holiday/,"🎁"],[/package|party|pax/,"🎉"]
+    [/cochinillo|lechon ulo/],[/lechon|crispy pata|kawali|pork belly|belly roll/],[/bbq|barbecue|skewer/],
+    [/chicken|cordon/],[/lumpia|shanghai|spring roll/],[/sisig/],[/kare|kaldereta|stew|sinigang|adobo/],
+    [/pancit|noodle|pasta|bihon|canton/],[/kakanin|flan|dessert|cake|leche|halo/],[/rice|sinangag/],
+    [/fish|bangus|seafood|shrimp/],[/salad|veg|chopsuey/],[/combo|holiday/],[/package|party|pax/]
   ];
   for(const [re,e] of map) if(re.test(t)) return e;
   return "🍽️";
