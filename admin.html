@@ -325,7 +325,7 @@ const ICON = {
 };
 
 /* ---------- state ---------- */
-const S = { user:null, cats:[], items:[], settings:null, admins:[], cat:null, tab:"orders", orders:[], ofilter:"new", oq:"" };
+const S = { user:null, cats:[], items:[], settings:null, admins:[], cat:null, tab:"orders", orders:[], ofilter:"all", oq:"" };
 
 /* ============================================================
    AUTH
@@ -953,7 +953,7 @@ function renderOrders(){
       <button class="btn ghost" id="oRefresh">Refresh</button></div>
     <div class="otools">
       <div class="ofilters">
-        ${[["new","New"],["confirmed","Confirmed"],["completed","Completed"],["cancelled","Cancelled"],["all","All"]].map(([k,l])=>`<button data-of="${k}" class="${S.ofilter===k?"on":""}">${l}<span class="c">${counts[k]}</span></button>`).join("")}
+        ${[["all","All"],["new","New"],["confirmed","Confirmed"],["completed","Completed"],["cancelled","Cancelled"]].map(([k,l])=>`<button data-of="${k}" class="${S.ofilter===k?"on":""}">${l}<span class="c">${counts[k]}</span></button>`).join("")}
       </div>
       <input type="text" id="oSearch" placeholder="Search name, phone, ref, address" value="${esc(S.oq)}">
       <span class="upd">${lastLoaded ? "Updated " + lastLoaded.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"}) : ""}</span>
