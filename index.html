@@ -34,17 +34,13 @@ a{color:inherit}
 .wrap{max-width:1140px;margin:0 auto;padding:0 20px}
 
 /* ---------- Logo mark ---------- */
-.mark{display:inline-grid;place-items:center;border-radius:50%;border:1.5px solid var(--ink);position:relative;background:#fff}
-.mark::after{content:"";position:absolute;inset:-6px;border-radius:50%;border:1px solid var(--line)}
-.mark span{font-family:var(--script);line-height:1;color:var(--ink);transform:rotate(-6deg) translateY(4px)}
-.mark span::after{content:"";display:block;height:1.2px;background:var(--ink);width:120%;margin:-6px 0 0 -6%;transform:rotate(-2deg)}
+.mark{display:block;object-fit:contain;border-radius:50%;background:#fff}
 
 /* ---------- Header ---------- */
 header{position:sticky;top:0;z-index:40;background:rgba(251,249,244,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
 .nav{display:flex;align-items:center;justify-content:space-between;height:70px}
 .brand{display:flex;align-items:center;gap:12px;text-decoration:none}
 .brand .mark{width:46px;height:46px}
-.brand .mark span{font-size:26px}
 .brand small{display:block;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
 .brand b{font-family:var(--serif);font-size:22px;font-weight:600;letter-spacing:.02em}
 .nav-links{display:flex;gap:28px;font-size:14px;letter-spacing:.06em;text-transform:uppercase}
@@ -75,7 +71,6 @@ header{position:sticky;top:0;z-index:40;background:rgba(251,249,244,.92);backdro
 .hero-art .leaf::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(115deg,transparent 0 22px,rgba(255,255,255,.06) 22px 24px)}
 .hero-art .leaf::after{content:"";position:absolute;left:50%;top:-10%;bottom:-10%;width:2px;background:rgba(255,255,255,.18);transform:rotate(25deg)}
 .hero-art .mark{position:absolute;width:62%;height:62%;left:19%;top:19%;box-shadow:0 30px 60px rgba(0,0,0,.25)}
-.hero-art .mark span{font-size:clamp(64px,10vw,104px)}
 .hero-art .tag{position:absolute;background:#fff;border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:13px;box-shadow:0 10px 24px rgba(0,0,0,.08)}
 .hero-art .t1{left:-4%;bottom:14%}
 .hero-art .t2{right:-2%;top:12%}
@@ -180,7 +175,6 @@ section{padding:64px 0}
 .contact b{display:block;font-family:var(--serif);font-size:22px;font-weight:600;margin-top:6px}
 footer{border-top:1px solid var(--line);padding:34px 0;text-align:center;color:var(--muted);font-size:13px}
 footer .mark{width:64px;height:64px;margin-bottom:12px}
-footer .mark span{font-size:34px}
 .admin-link{display:inline-flex;align-items:center;gap:6px;margin-top:14px;color:var(--muted);text-decoration:none;font-size:12px;letter-spacing:.08em;text-transform:uppercase;border:1px solid var(--line);border-radius:999px;padding:6px 12px}
 .admin-link:hover{color:var(--ink);border-color:var(--ink)}
 .admin-link svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:1.8}
@@ -196,7 +190,6 @@ footer .mark span{font-size:34px}
 .db{flex:1;overflow:auto;padding:16px 22px}
 .empty{text-align:center;color:var(--muted);padding:60px 0}
 .empty .mark{width:80px;height:80px;margin-bottom:16px}
-.empty .mark span{font-size:40px}
 .cart-head{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);padding:2px 2px 10px}
 .line{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:10px}
 .line-top{display:grid;grid-template-columns:56px 1fr;gap:12px;align-items:start}
@@ -271,7 +264,7 @@ form.co input:focus,form.co select:focus,form.co textarea:focus{outline:none;bor
 <header>
   <div class="wrap nav">
     <a class="brand" href="#top">
-      <div class="mark"><span>Febys</span></div>
+      <img class="mark" src="logo.jpg" alt="">
       <div><b>Febys</b><small>Corniche Deira · Dubai</small></div>
     </a>
     <nav class="nav-links">
@@ -317,7 +310,7 @@ form.co input:focus,form.co select:focus,form.co textarea:focus{outline:none;bor
     </div>
     <div class="hero-art">
       <div class="leaf"></div>
-      <div class="mark"><span>Febys</span></div>
+      <img class="mark" src="logo.jpg" alt="Febys logo">
       <!-- <div class="tag t2">Great tasting food at a great price 🍃</div> -->
     </div>
   </div>
@@ -364,7 +357,7 @@ form.co input:focus,form.co select:focus,form.co textarea:focus{outline:none;bor
 </section>
 
 <footer>
-  <div class="mark"><span>Febys</span></div>
+  <img class="mark" src="logo.jpg" alt="Febys logo">
   <div>Great tasting food at a great price.</div>
   <div style="margin-top:6px">© <span id="yr"></span> Febys · Dubai, UAE</div>
   <a class="admin-link" href="https://www.facebook.com/febyskitchenuae" target="_blank" rel="noopener">Facebook page</a>
@@ -505,7 +498,7 @@ $("#openCart").onclick = openCart; $("#closeCart").onclick = closeCart; $("#over
 function renderCart(){
   $("#dTitle").textContent = "Your order";
   if(!cart.length){
-    $("#dBody").innerHTML = `<div class="empty"><div class="mark"><span>Febys</span></div><p>Your order is empty.<br>Add something delicious from the menu.</p></div>`;
+    $("#dBody").innerHTML = `<div class="empty"><img class="mark" src="logo.jpg" alt=""><p>Your order is empty.<br>Add something delicious from the menu.</p></div>`;
     $("#dFoot").innerHTML = `<button class="btn btn-dark full" onclick="closeCart()">Browse menu</button>`;
     return;
   }
