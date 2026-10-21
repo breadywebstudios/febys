@@ -39,7 +39,7 @@ a{color:var(--leaf-2)}
 /* fields */
 label.f{display:grid;gap:5px;font-size:13px;color:var(--ink-2);font-weight:500}
 label.f small{font-weight:400;color:var(--muted)}
-input[type=text],input[type=email],input[type=password],input[type=number],input[type=tel],select,textarea{
+input[type=text],input[type=email],input[type=password],input[type=number],input[type=tel],input[type=date],input[type=time],select,textarea{
   width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;background:#fff;font-size:15px;font-weight:400}
 input:focus,select:focus,textarea:focus{outline:none;border-color:var(--leaf-2)}
 textarea{resize:vertical;min-height:70px}
@@ -157,7 +157,13 @@ main{max-width:1180px;margin:0 auto;padding:26px 20px 80px}
 .order.st-new{border-left:4px solid var(--red)}
 .order.st-confirmed{border-left:4px solid var(--leaf-2)}
 .order.st-completed,.order.st-cancelled{opacity:.72}
-.ohead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid var(--line);background:#fdfcf9}
+.ohead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 12px;background:#fdfcf9}
+.osummary{display:flex;align-items:center;gap:10px;flex:1;min-width:240px;padding:4px;border:0;background:transparent;text-align:left}
+.osummary:focus-visible{outline:2px solid var(--leaf-2);outline-offset:2px;border-radius:6px}
+.osummary .customer{font-weight:500}
+.osummary .toggle-hint{font-size:12px;color:var(--muted)}
+.oedit{flex:0 0 auto}
+.odetails{border-top:1px solid var(--line)}
 .ohead .ref{font-weight:600;letter-spacing:.02em}
 .ohead .when{font-size:13px;color:var(--muted)}
 .ohead .tot{margin-left:auto;font-family:var(--serif);font-size:22px;font-weight:600}
@@ -187,10 +193,19 @@ main{max-width:1180px;margin:0 auto;padding:26px 20px 80px}
 .onote{margin-top:6px;font-size:14px;background:var(--paper);border-radius:10px;padding:9px 11px;white-space:pre-wrap}
 .ofoot{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:12px 16px;border-top:1px solid var(--line);background:#fdfcf9}
 .ofoot textarea{flex:1;min-width:220px;min-height:38px;height:38px;font-size:13.5px;padding:8px 10px}
+.edit-items{display:grid;gap:10px}
+.edit-item{display:grid;grid-template-columns:2fr 1.2fr 90px 110px 1.3fr 36px;gap:8px;align-items:end;padding:12px;border:1px solid var(--line);border-radius:12px;background:#fff}
+.edit-item .f-includes{grid-column:1/-2}
+.edit-item .remove-item{height:40px}
+.edit-order-checks{display:flex;gap:18px;flex-wrap:wrap}
+.edit-order-checks label{display:flex;align-items:center;gap:7px;font-size:14px}
+.edit-order-checks input{width:auto}
 @media (max-width:860px){
   .obody{grid-template-columns:1fr}
   .obody > div + div{border-left:0;border-top:1px solid var(--line)}
   .otools .upd{width:100%;margin-left:0}
+  .edit-item{grid-template-columns:1fr 1fr}
+  .edit-item .f-includes{grid-column:1/-1}
 }
 .toast{position:fixed;left:50%;bottom:22px;transform:translate(-50%,140%);background:var(--ink);color:#fff;padding:11px 18px;border-radius:999px;font-size:14px;z-index:80;transition:.3s;max-width:90vw}
 .toast.show{transform:translate(-50%,0)}
@@ -408,8 +423,8 @@ function priceText(it){
    TABS
    ============================================================ */
 document.querySelectorAll("nav.tabs button").forEach(b => b.onclick = () => {
-  S.tab = b.dataset.tab;
-  document.querySelectorAll("nav.tabs button").forEach(x=>x.classList.toggle("on", x===b));
+  S.tab = b.dataset.tab === "orders" && S.tab === "orders" ? null : b.dataset.tab;
+  document.querySelectorAll("nav.tabs button").forEach(x=>x.classList.toggle("on", x.dataset.tab===S.tab));
   renderTab();
 });
 function renderTab(){
@@ -802,6 +817,7 @@ async function renderAdmins(){
    ============================================================ */
 const STATUS = { new:"New", confirmed:"Confirmed", completed:"Completed", cancelled:"Cancelled" };
 let pollT, lastLoaded = null;
+const expandedOrders = new Set();
 async function loadOrders(silent){
   const { data, error } = await sb.from("orders").select("*").order("created_at", { ascending:false }).limit(300);
   if(error){ if(!silent) fail(error, "Couldn't load orders"); return false; }
@@ -854,6 +870,7 @@ function itemPrice(i){
 }
 function orderCard(o){
   const items = Array.isArray(o.items) ? o.items : [];
+  const expanded = expandedOrders.has(o.id);
   const acts = {
     new:       [["confirmed","Confirm","btn sm"],["cancelled","Cancel","btn danger sm"]],
     confirmed: [["completed","Mark completed","btn sm"],["new","Back to new","btn ghost sm"],["cancelled","Cancel","btn danger sm"]],
@@ -863,11 +880,17 @@ function orderCard(o){
   return `
   <article class="order st-${o.status}" data-oid="${o.id}">
     <div class="ohead">
-      <span class="ref">${esc(o.ref)}</span>
-      <span class="spill ${o.status}">${STATUS[o.status]}</span>
-      <span class="when">Placed ${esc(placedAt(o.created_at))}</span>
-      <span class="tot"><small>${o.has_estimates?"est.":""}</small>${money(o.subtotal)}</span>
+      <button class="osummary" data-otoggle="${o.id}" aria-expanded="${expanded}" aria-controls="order-details-${o.id}">
+        <span class="ref">${esc(o.ref)}</span>
+        <span class="spill ${o.status}">${STATUS[o.status]}</span>
+        <span class="customer">${esc(o.customer_name)}</span>
+        <span class="when">Placed ${esc(placedAt(o.created_at))}</span>
+        <span class="tot"><small>${o.has_estimates?"est.":""}</small>${money(o.subtotal)}</span>
+        <span class="toggle-hint">${expanded?"Hide details":"View details"}</span>
+      </button>
+      <button class="btn ghost sm oedit" data-oedit="${o.id}">${ICON.edit} Edit</button>
     </div>
+    <div class="odetails ${expanded?"":"hidden"}" id="order-details-${o.id}">
     <div class="obody">
       <div>
         <div class="olabel">Customer</div>
@@ -902,6 +925,7 @@ function orderCard(o){
       ${acts.map(([st,label,cls])=>`<button class="${cls}" data-ost="${st}" data-oid="${o.id}">${label}</button>`).join("")}
       <button class="icon" title="Delete order" data-odel="${o.id}">${ICON.del}</button>
     </div>
+    </div>
   </article>`;
 }
 function renderOrders(){
@@ -926,6 +950,12 @@ function renderOrders(){
   t.querySelectorAll("[data-of]").forEach(b=>b.onclick=()=>{ S.ofilter=b.dataset.of; renderOrders(); });
   $("#oSearch").oninput = e => { S.oq = e.target.value; const pos = e.target.selectionStart; renderOrders(); const i=$("#oSearch"); i.focus(); i.setSelectionRange(pos,pos); };
   $("#oRefresh").onclick = async () => { if(await loadOrders()) { renderOrders(); toast("Orders up to date"); } };
+  t.querySelectorAll("[data-otoggle]").forEach(b=>b.onclick=()=>{
+    const id = +b.dataset.otoggle;
+    if(expandedOrders.has(id)) expandedOrders.delete(id); else expandedOrders.add(id);
+    renderOrders();
+  });
+  t.querySelectorAll("[data-oedit]").forEach(b=>b.onclick=()=>editOrder(+b.dataset.oedit));
   t.querySelectorAll("[data-ost]").forEach(b=>b.onclick=()=>setOrderStatus(+b.dataset.oid, b.dataset.ost));
   t.querySelectorAll("[data-onote]").forEach(a=>a.onchange=()=>saveOrderNote(+a.dataset.onote, a.value));
   t.querySelectorAll("[data-odel]").forEach(b=>b.onclick=()=>{
@@ -936,6 +966,106 @@ function renderOrders(){
       S.orders = S.orders.filter(x=>x.id!==o.id); updateBadge(); renderOrders(); toast("Order deleted");
     });
   });
+}
+function orderItemEditor(item={}, index=0){
+  return `<div class="edit-item" data-edit-item="${index}">
+    <label class="f">Item name<input type="text" data-item-field="name" maxlength="200" value="${esc(item.name||"")}" required></label>
+    <label class="f">Variant<input type="text" data-item-field="variant" value="${esc(item.variant||"")}"></label>
+    <label class="f">Quantity<input type="number" data-item-field="qty" min="1" step="1" value="${esc(item.qty||1)}" required></label>
+    <label class="f">Unit price<input type="number" data-item-field="price" min="0" step="0.01" value="${item.price==null?"":esc(item.price)}" placeholder="On request"></label>
+    <label class="f">Price range<input type="text" data-item-field="range" value="${esc(item.range||"")}" placeholder="Optional"></label>
+    <button type="button" class="icon remove-item" title="Remove item" data-item-remove="${index}">${ICON.del}</button>
+    <label class="f">Good for<input type="text" data-item-field="pax" value="${esc(item.pax||"")}"></label>
+    <label class="f">Category<input type="text" data-item-field="category" value="${esc(item.category||"")}"></label>
+    <label class="f f-includes">Includes <small>One entry per line</small><textarea data-item-field="includes">${esc(Array.isArray(item.includes)?item.includes.join("\n"):"")}</textarea></label>
+  </div>`;
+}
+function editOrder(id){
+  const o = S.orders.find(x=>x.id===id);
+  if(!o) return;
+  const items = Array.isArray(o.items) ? o.items : [];
+  modal(`<div class="mh"><h3>Edit order ${esc(o.ref)}</h3><button class="x" data-close>×</button></div>
+    <div class="mb" id="editOrderForm">
+      <div class="two">
+        <label class="f">Customer name<input type="text" id="editCustomer" maxlength="120" required value="${esc(o.customer_name)}"></label>
+        <label class="f">Phone<input type="tel" id="editPhone" maxlength="40" required value="${esc(o.phone)}"></label>
+      </div>
+      <div class="two">
+        <label class="f">Order type<select id="editMode"><option${o.mode==="Delivery"?" selected":""}>Delivery</option><option${o.mode==="Pickup"?" selected":""}>Pickup</option></select></label>
+        <label class="f">Order date<input type="date" id="editDate" value="${esc(o.order_date||"")}"></label>
+      </div>
+      <div class="two">
+        <label class="f">Address<input type="text" id="editAddress" maxlength="500" value="${esc(o.address||"")}"></label>
+        <label class="f">Order time<input type="time" id="editTime" value="${esc((o.order_time||"").slice(0,5))}"></label>
+      </div>
+      <label class="f">Customer notes<textarea id="editNotes" maxlength="1000">${esc(o.notes||"")}</textarea></label>
+      <div class="edit-order-checks">
+        <label><input type="checkbox" id="editChafing"${o.chafing?" checked":""}> Chafing dish rental</label>
+        <label><input type="checkbox" id="editEstimates"${o.has_estimates?" checked":""}> Subtotal is estimated</label>
+      </div>
+      <label class="f">Items</label>
+      <div class="edit-items" id="editItems">${items.map(orderItemEditor).join("")}</div>
+      <button type="button" class="btn ghost sm" id="addOrderItem">Add item</button>
+      <label class="f">Subtotal (AED)<input type="number" id="editSubtotal" min="0" step="0.01" required value="${esc(o.subtotal)}"></label>
+    </div>
+    <div class="mf"><button class="btn ghost" data-close>Cancel</button><button class="btn" id="saveOrderEdit">Save changes</button></div>`);
+  const renderItems = rows => {
+    $("#editItems").innerHTML = rows.map(orderItemEditor).join("");
+    $("#editItems").querySelectorAll("[data-item-remove]").forEach(b=>b.onclick=()=>{
+      const current = readItems();
+      current.splice(+b.dataset.itemRemove,1);
+      renderItems(current);
+    });
+  };
+  const readItems = () => [...$("#editItems").querySelectorAll(".edit-item")].map(row=>{
+    const value=field=>row.querySelector(`[data-item-field="${field}"]`).value.trim();
+    const rawPrice=value("price");
+    return {
+      name:value("name"),variant:value("variant"),qty:Number(value("qty")),
+      price:rawPrice===""?null:Number(rawPrice),range:value("range"),
+      pax:value("pax"),category:value("category"),
+      includes:value("includes").split(/\r?\n/).map(x=>x.trim()).filter(Boolean)
+    };
+  });
+  renderItems(items);
+  $("#addOrderItem").onclick=()=>{
+    const current=readItems();
+    current.push({name:"",variant:"",qty:1,price:null,range:"",pax:"",category:"",includes:[]});
+    renderItems(current);
+  };
+  $("#saveOrderEdit").onclick=async()=>{
+    const name=$("#editCustomer").value.trim(), phone=$("#editPhone").value.trim();
+    const subtotal=Number($("#editSubtotal").value);
+    const updatedItems=readItems();
+    if(!name||name.length>120||phone.length<5||phone.length>40){
+      toast("Enter a customer name and a valid phone number",true); return;
+    }
+    if(!updatedItems.length||updatedItems.some(i=>!i.name||!Number.isInteger(i.qty)||i.qty<1||
+      (i.price!==null&&(!Number.isFinite(i.price)||i.price<0)))){
+      toast("Add at least one valid item with a name and quantity",true); return;
+    }
+    if(!Number.isFinite(subtotal)||subtotal<0){
+      toast("Enter a valid non-negative subtotal",true); return;
+    }
+    const mode=$("#editMode").value;
+    const address=$("#editAddress").value.trim();
+    if(address.length>500||$("#editNotes").value.length>1000){
+      toast("Address or customer notes are too long",true); return;
+    }
+    if(mode==="Delivery"&&!address){
+      toast("Add a delivery address",true); return;
+    }
+    const changes={
+      customer_name:name,phone,mode,address:address||null,
+      order_date:$("#editDate").value||null,order_time:$("#editTime").value||null,
+      chafing:$("#editChafing").checked,notes:$("#editNotes").value.trim()||null,
+      items:updatedItems,subtotal,has_estimates:$("#editEstimates").checked
+    };
+    const button=$("#saveOrderEdit"); button.disabled=true;
+    const { data,error }=await sb.from("orders").update(changes).eq("id",id).select().single();
+    if(error){ button.disabled=false; return fail(error,"Couldn't update order"); }
+    Object.assign(o,data); expandedOrders.add(id); closeModal(); renderOrders(); toast("Order updated");
+  };
 }
 async function setOrderStatus(id, status){
   const { data, error } = await sb.from("orders").update({ status }).eq("id", id).select().single();
