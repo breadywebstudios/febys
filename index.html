@@ -536,24 +536,12 @@ function renderCheckout(){
 }
 
 /* ---------- WhatsApp order message ---------- */
-function foodEmoji(name, cat){
-  const t = (name+" "+cat).toLowerCase();
-  const map = [
-    [/cochinillo|lechon ulo/,"🐷"],[/lechon|crispy pata|kawali|pork belly|belly roll/,"🥓"],[/bbq|barbecue|skewer/,"🍢"],
-    [/chicken|cordon/,"🍗"],[/lumpia|shanghai|spring roll/,"🥟"],[/sisig/,"🔥"],[/kare|kaldereta|stew|sinigang|adobo/,"🍲"],
-    [/pancit|noodle|pasta|bihon|canton/,"🍜"],[/kakanin|flan|dessert|cake|leche|halo/,"🍮"],[/rice|sinangag/,"🍚"],
-    [/fish|bangus|seafood|shrimp/,"🐟"],[/salad|veg|chopsuey/,"🥗"],[/combo|holiday/,"🎁"],[/package|party|pax/,"🎉"]
-  ];
-  for(const [re,e] of map) if(re.test(t)) return e;
-  return "🍽️";
-}
 function prettyDate(iso, time){
   try{
     const d = new Date(iso + "T" + (time||"12:00"));
-    const day = d.toLocaleDateString("en-GB", { weekday:"short", day:"numeric", month:"short", year:"numeric" });
-    const hr = d.toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit" });
-    return `${day} · ⏰ ${hr}`;
-  }catch(e){ return `${iso} · ⏰ ${time}`; }
+    return d.toLocaleDateString("en-GB", { weekday:"short", day:"numeric", month:"short", year:"numeric" })
+         + ", " + d.toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit" });
+  }catch(e){ return `${iso}, ${time}`; }
 }
 function sendOrder(){
   const f = $("#co");
@@ -562,43 +550,39 @@ function sendOrder(){
   if(d.mode==="Delivery" && !d.address.trim()){ toast("Please add a delivery address"); return; }
 
   const ref = "FB-" + new Date().toISOString().slice(5,10).replace("-","") + "-" + Math.floor(1000 + Math.random()*9000);
-  const line = "━━━━━━━━━━━━━━━";
-  const count = cart.reduce((s,l)=>s+l.qty,0);
-  const items = cart.flatMap((l,i)=>{
-    const price = l.price==null ? "_price on request_" : l.range ? `AED ${l.range}` : fmt(l.price*l.qty);
-    const head = `${foodEmoji(l.name, l.cat||"")} *${l.name}*${l.variant?` (${l.variant})`:""}  ×${l.qty}\n     💵 ${price}${l.qty>1 && l.price!=null && !l.range ? ` _(${fmt(l.price)} each)_` : ""}`;
-    const extra = [];
-    if(l.pax) extra.push(`     👥 Good for ${l.pax}`);
-    (l.list||[]).forEach(x=>extra.push(`     ▫️ ${x}`));
-    return [head, ...extra, ""];
+  const items = cart.flatMap(l=>{
+    const price = l.price==null ? "price on request" : l.range ? `AED ${l.range}` : fmt(l.price*l.qty);
+    return [
+      `${l.qty} × *${l.name}*${l.variant?` (${l.variant})`:""} — ${price}`,
+      ...(l.pax ? [`   _Good for ${l.pax}_`] : []),
+      ...(l.list||[]).map(x=>`   · ${x}`)
+    ];
   });
 
   const msg = [
-    `🍽️ *NEW ORDER · FEBYS* 🇵🇭`,
-    `🧾 Ref: *${ref}*`,
-    line,
-    `🛒 *MY ORDER* (${count} item${count>1?"s":""})`,
+    `*NEW ORDER — FEBYS*`,
+    `Ref: ${ref}`,
     "",
+    `*Order*`,
     ...items,
-    line,
-    `💰 *${hasEstimates()?"Estimated subtotal":"Subtotal"}: ${fmt(total())}*`,
-    d.chafing ? `🔥 Chafing dish rental: *Yes please*` : "",
-    `_Delivery fee & final total to be confirmed_`,
-    line,
-    `👤 *CUSTOMER*`,
-    `     ${d.name}`,
-    `     📱 ${d.phone}`,
     "",
-    d.mode==="Delivery" ? `🛵 *DELIVERY*` : `🏃 *PICKUP*`,
-    `     📅 ${prettyDate(d.date, d.time)}`,
-    d.mode==="Delivery" ? `     📍 ${d.address.trim()}` : `     📍 Febys, Al Rigga, Corniche Deira`,
-    d.notes.trim() ? `\n📝 *NOTES*\n     ${d.notes.trim()}` : "",
-    line,
-    `Salamat po! Looking forward to it 🙏💚`
+    `*${hasEstimates()?"Estimated subtotal":"Subtotal"}: ${fmt(total())}*`,
+    d.chafing ? `Chafing dish rental: Yes` : "",
+    `_Delivery fee and final total to be confirmed._`,
+    "",
+    `*Customer*`,
+    `${d.name} · ${d.phone}`,
+    "",
+    `*${d.mode}*`,
+    prettyDate(d.date, d.time),
+    d.mode==="Delivery" ? d.address.trim() : `Febys, Al Rigga, Corniche Deira`,
+    ...(d.notes.trim() ? ["", `*Notes*`, d.notes.trim()] : []),
+    "",
+    `Salamat po! 🤍`
   ].filter((x,i,a)=>!(x==="" && a[i-1]==="")).join("\n");
 
   window.open(`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(msg)}`, "_blank");
-  cart = []; save(); updateCount(); closeCart(); toast("Opening WhatsApp… 💚");
+  cart = []; save(); updateCount(); closeCart(); toast("Opening WhatsApp…");
 }
 
 let tt; function toast(t){ const el=$("#toast"); el.textContent=t; el.classList.add("show"); clearTimeout(tt); tt=setTimeout(()=>el.classList.remove("show"),1800); }
