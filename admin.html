@@ -33,7 +33,7 @@ a{color:var(--leaf-2)}
 .login-card h1{font-family:var(--serif);font-weight:600;font-size:30px}
 .login-card p.sub{color:var(--muted);font-size:14px;margin:4px 0 22px}
 .login-card form{display:grid;gap:12px;text-align:left}
-.links{display:flex;justify-content:space-between;font-size:13px;margin-top:14px}
+.links{display:flex;justify-content:center;font-size:13px;margin-top:14px}
 .links button{background:none;border:0;color:var(--leaf-2);text-decoration:underline}
 
 /* fields */
@@ -229,7 +229,7 @@ main{max-width:1180px;margin:0 auto;padding:26px 20px 80px}
       <button class="btn" type="submit" id="loginBtn">Sign in</button>
     </form>
     <div class="links">
-      <button type="button" id="modeSignup">First time? Create password</button>
+      <button type="button" id="modeBack" class="hidden">Back to sign in</button>
       <button type="button" id="modeReset">Forgot password</button>
     </div>
   </div>
@@ -314,11 +314,11 @@ function setLoginMode(m){
   $("#pwWrap input").autocomplete = m==="signup" ? "new-password" : "current-password";
   $("#loginBtn").textContent = {signin:"Sign in", signup:"Create account", reset:"Send reset link"}[m];
   $("#loginSub").textContent = {signin:"Sign in to manage the Febys menu.", signup:"Use the email an admin added, then choose a password.", reset:"We'll email you a link to set a new password."}[m];
-  $("#modeSignup").textContent = m==="signin" ? "First time? Create password" : "Back to sign in";
+  $("#modeBack").classList.toggle("hidden", m==="signin");
   $("#modeReset").classList.toggle("hidden", m!=="signin");
   $("#loginMsg").innerHTML = "";
 }
-$("#modeSignup").onclick = () => setLoginMode(loginMode==="signin" ? "signup" : "signin");
+$("#modeBack").onclick = () => setLoginMode("signin");
 $("#modeReset").onclick = () => setLoginMode("reset");
 
 $("#loginForm").onsubmit = async e => {
