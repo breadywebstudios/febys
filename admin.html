@@ -1010,14 +1010,14 @@ function editOrder(id){
       <label class="f">Customer notes<textarea id="editNotes" maxlength="1000">${esc(o.notes||"")}</textarea></label>
       <div class="edit-order-checks">
         <label><input type="checkbox" id="editChafing"${o.chafing?" checked":""}> Chafing dish rental</label>
-        <label><input type="checkbox" id="editEstimates"${o.has_estimates?" checked":""}> Subtotal is estimated</label>
+        <label><input type="checkbox" id="editEstimates"${o.has_estimates?" checked":""} disabled> Subtotal is estimated</label>
       </div>
       <label class="f">Items</label>
       <div class="edit-items" id="editItems">${items.map(orderItemEditor).join("")}</div>
       <button type="button" class="btn ghost sm" id="addOrderItem">Add item</button>
-      <label class="f">Subtotal (AED)<input type="number" id="editSubtotal" min="0" step="0.01" required value="${esc(o.subtotal)}"></label>
+      <label class="f">Subtotal (AED) · <span id="editSubtotalLabel">${o.has_estimates?"Estimated subtotal":"Subtotal"}</span><input type="number" id="editSubtotal" min="0" step="0.01" readonly value="${esc(o.subtotal)}"></label>
     </div>
-    <div class="mf"><button class="btn ghost" data-close>Cancel</button><button class="btn" id="saveOrderEdit">Save changes</button></div>`);
+    <div class="mf"><button class="btn ghost" data-close>Cancel</button><button class="btn ghost" id="editOrderWhatsApp">WhatsApp updated details</button><button class="btn" id="saveOrderEdit">Save changes</button></div>`);
   const renderItems = rows => {
     $("#editItems").innerHTML = rows.map(orderItemEditor).join("");
     $("#editItems").querySelectorAll("[data-item-name]").forEach(select=>select.onchange=()=>{
@@ -1042,6 +1042,7 @@ function editOrder(id){
       const current = readItems();
       current.splice(+b.dataset.itemRemove,1);
       renderItems(current);
+      updateEstimatedSubtotal();
     });
   };
   const readItems = () => [...$("#editItems").querySelectorAll(".edit-item")].map(row=>{
@@ -1056,11 +1057,71 @@ function editOrder(id){
       includes:value("includes").split(/\r?\n/).map(x=>x.trim()).filter(Boolean)
     };
   });
+  const updateEstimatedSubtotal = () => {
+    const current=readItems();
+    const subtotal=current.reduce((sum,item)=>sum+
+      (Number.isFinite(item.price)?item.price:0)*(Number.isFinite(item.qty)?item.qty:0),0);
+    const estimated=current.some(item=>item.price==null||item.range);
+    $("#editSubtotal").value=subtotal.toFixed(2);
+    $("#editEstimates").checked=estimated;
+    $("#editSubtotalLabel").textContent=estimated?"Estimated subtotal":"Subtotal";
+  };
+  $("#editItems").addEventListener("input",updateEstimatedSubtotal);
+  $("#editItems").addEventListener("change",updateEstimatedSubtotal);
   renderItems(items);
+  updateEstimatedSubtotal();
   $("#addOrderItem").onclick=()=>{
     const current=readItems();
     current.push({name:"",variant:"",qty:1,price:null,range:"",pax:"",category:"",includes:[]});
     renderItems(current);
+    updateEstimatedSubtotal();
+  };
+  $("#editOrderWhatsApp").onclick=()=>{
+    const recipient=S.settings?.whatsapp;
+    if(!recipient){ toast("Set the business WhatsApp number in Settings first",true); return; }
+    const customer=$("#editCustomer").value.trim();
+    const phone=$("#editPhone").value.trim();
+    const mode=$("#editMode").value;
+    const address=$("#editAddress").value.trim();
+    const date=$("#editDate").value;
+    const time=$("#editTime").value;
+    const notes=$("#editNotes").value.trim();
+    const current=readItems();
+    if(!customer||phone.length<5||current.some(item=>!item.name||!Number.isInteger(item.qty)||item.qty<1)){
+      toast("Complete the customer details and valid order items first",true); return;
+    }
+    if(mode==="Delivery"&&!address){ toast("Add a delivery address first",true); return; }
+    const subtotal=current.reduce((sum,item)=>sum+
+      (Number.isFinite(item.price)?item.price:0)*(Number.isFinite(item.qty)?item.qty:0),0);
+    const estimated=current.some(item=>item.price==null||item.range);
+    const line="━━━━━━━━━━━━━━━";
+    const itemLines=current.flatMap(item=>{
+      const price=item.price==null?"Price on request":item.range?`AED ${item.range}`:`AED ${(item.price*item.qty).toFixed(2)}`;
+      return [
+        `*${item.name}*${item.variant?` (${item.variant})`:""} ×${item.qty} — ${price}`,
+        item.pax?`Good for ${item.pax}`:"",
+        ...(item.includes||[]).map(include=>`• ${include}`)
+      ].filter(Boolean);
+    });
+    const deliveryDate=date?forDate({order_date:date,order_time:time}):"Not specified";
+    const message=[
+      `*UPDATED ORDER · FEBYS*`,
+      `Ref: *${o.ref}*`,
+      line,
+      `*ORDER DETAILS*`,
+      ...itemLines,
+      line,
+      `*${estimated?"Estimated subtotal":"Subtotal"}: ${money(subtotal)}*`,
+      `_Delivery fee and final total to be confirmed_`,
+      line,
+      `*CUSTOMER*`,
+      customer,
+      phone,
+      mode==="Delivery"?`*DELIVERY* · ${deliveryDate}\n${address}`:`*PICKUP* · ${deliveryDate}`,
+      $("#editChafing").checked?"Chafing dish rental requested":"",
+      notes?`*NOTES*\n${notes}`:""
+    ].filter(Boolean).join("\n");
+    window.open(`${waLink(recipient)}&text=${encodeURIComponent(message)}`,"_blank","noopener");
   };
   $("#saveOrderEdit").onclick=async()=>{
     const name=$("#editCustomer").value.trim(), phone=$("#editPhone").value.trim();
