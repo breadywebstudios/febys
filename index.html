@@ -1,0 +1,578 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Febys · Filipino Food Trays & Catering</title>
+<meta name="description" content="Febys, Corniche Deira — Filipino food trays, holiday combos and party packages. Order on WhatsApp.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mrs+Saint+Delafield&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#141414;
+  --ink-2:#3d3d3a;
+  --muted:#7a776f;
+  --paper:#fbf9f4;
+  --card:#ffffff;
+  --line:#e6e1d6;
+  --leaf:#2f4a2c;
+  --leaf-2:#43663e;
+  --leaf-soft:#e7eee3;
+  --holiday:#9e1b1f;
+  --script:'Mrs Saint Delafield', cursive;
+  --serif:'Cormorant Garamond', Georgia, serif;
+  --sans:'Jost', system-ui, sans-serif;
+  --radius:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--sans);background:var(--paper);color:var(--ink);font-weight:400;line-height:1.55;-webkit-font-smoothing:antialiased}
+img{max-width:100%;display:block}
+button{font-family:inherit;cursor:pointer}
+a{color:inherit}
+.wrap{max-width:1140px;margin:0 auto;padding:0 20px}
+
+/* ---------- Logo mark ---------- */
+.mark{display:inline-grid;place-items:center;border-radius:50%;border:1.5px solid var(--ink);position:relative;background:#fff}
+.mark::after{content:"";position:absolute;inset:-6px;border-radius:50%;border:1px solid var(--line)}
+.mark span{font-family:var(--script);line-height:1;color:var(--ink);transform:rotate(-6deg) translateY(4px)}
+.mark span::after{content:"";display:block;height:1.2px;background:var(--ink);width:120%;margin:-6px 0 0 -6%;transform:rotate(-2deg)}
+
+/* ---------- Header ---------- */
+header{position:sticky;top:0;z-index:40;background:rgba(251,249,244,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.nav{display:flex;align-items:center;justify-content:space-between;height:70px}
+.brand{display:flex;align-items:center;gap:12px;text-decoration:none}
+.brand .mark{width:46px;height:46px}
+.brand .mark span{font-size:26px}
+.brand small{display:block;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+.brand b{font-family:var(--serif);font-size:22px;font-weight:600;letter-spacing:.02em}
+.nav-links{display:flex;gap:28px;font-size:14px;letter-spacing:.06em;text-transform:uppercase}
+.nav-links a{text-decoration:none;color:var(--ink-2)}
+.nav-links a:hover{color:var(--ink)}
+.cart-btn{display:flex;align-items:center;gap:8px;background:var(--ink);color:#fff;border:0;border-radius:999px;padding:10px 18px;font-size:14px;letter-spacing:.04em}
+.cart-btn .count{background:#fff;color:var(--ink);border-radius:999px;min-width:22px;height:22px;display:grid;place-items:center;font-size:12px;font-weight:600;padding:0 6px}
+
+/* ---------- Hero ---------- */
+.hero{padding:72px 0 56px;position:relative;overflow:hidden}
+.hero-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:48px;align-items:center}
+.eyebrow{font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:var(--leaf-2);font-weight:500}
+.hero h1{font-family:var(--serif);font-weight:500;font-size:clamp(40px,6vw,68px);line-height:1.02;margin:16px 0 18px}
+.hero h1 em{font-family:var(--script);font-style:normal;font-weight:400;font-size:1.35em;display:inline-block;transform:translateY(8px);color:var(--leaf)}
+.hero p.lead{font-size:18px;color:var(--ink-2);max-width:480px;font-weight:300}
+.hero-cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:28px}
+.btn{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:14px 24px;font-size:15px;text-decoration:none;border:1.5px solid var(--ink);transition:.2s}
+.btn-dark{background:var(--ink);color:#fff}
+.btn-dark:hover{background:var(--leaf);border-color:var(--leaf)}
+.btn-ghost{background:transparent;color:var(--ink)}
+.btn-ghost:hover{background:var(--ink);color:#fff}
+.facts{display:flex;flex-wrap:wrap;gap:22px;margin-top:34px;font-size:14px;color:var(--ink-2)}
+.facts div{display:flex;align-items:center;gap:8px}
+.facts svg{width:18px;height:18px;stroke:var(--leaf);fill:none;stroke-width:1.6}
+.hero-art{position:relative;aspect-ratio:1;max-width:440px;justify-self:center;width:100%}
+.hero-art .leaf{position:absolute;inset:0;border-radius:50%;background:
+  radial-gradient(circle at 30% 30%,var(--leaf-2),var(--leaf) 70%);overflow:hidden}
+.hero-art .leaf::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(115deg,transparent 0 22px,rgba(255,255,255,.06) 22px 24px)}
+.hero-art .leaf::after{content:"";position:absolute;left:50%;top:-10%;bottom:-10%;width:2px;background:rgba(255,255,255,.18);transform:rotate(25deg)}
+.hero-art .mark{position:absolute;width:62%;height:62%;left:19%;top:19%;box-shadow:0 30px 60px rgba(0,0,0,.25)}
+.hero-art .mark span{font-size:clamp(64px,10vw,104px)}
+.hero-art .tag{position:absolute;background:#fff;border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:13px;box-shadow:0 10px 24px rgba(0,0,0,.08)}
+.hero-art .t1{left:-4%;bottom:14%}
+.hero-art .t2{right:-2%;top:12%}
+
+/* ---------- Hero food parade (background) ---------- */
+.hero{background:var(--ink);color:#fff;min-height:640px;display:flex;align-items:center;padding:96px 0 88px}
+.hero > .wrap{position:relative;z-index:2;width:100%}
+.hero-bg{position:absolute;left:-6%;right:-6%;top:50%;transform:translateY(-50%) rotate(-4deg);display:flex;flex-direction:column;gap:14px;z-index:0;pointer-events:none}
+.hero-shade{position:absolute;inset:0;z-index:1;background:
+  linear-gradient(90deg,rgba(14,14,13,.92) 0%,rgba(14,14,13,.78) 42%,rgba(14,14,13,.45) 75%,rgba(14,14,13,.55) 100%),
+  linear-gradient(180deg,rgba(14,14,13,.35),transparent 30%,transparent 70%,rgba(14,14,13,.5))}
+.lane{overflow:hidden}
+.track{display:flex;gap:14px;width:max-content;animation:parade 90s linear infinite}
+.lane.reverse .track{animation-direction:reverse;animation-duration:105s}
+.lane.slow .track{animation-duration:120s}
+@keyframes parade{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.shot{flex:0 0 auto;width:300px;height:210px;border-radius:14px;overflow:hidden;background:#2a2a27}
+.shot:nth-child(3n+2){width:240px}
+.shot:nth-child(4n){width:340px}
+.shot img{width:100%;height:100%;object-fit:cover}
+.hero .eyebrow{color:#b9d4ad}
+.hero h1{color:#fff;text-shadow:0 2px 24px rgba(0,0,0,.35)}
+.hero h1 em{color:#cfe0c8}
+.hero p.lead{color:rgba(255,255,255,.86)}
+.hero .facts{color:rgba(255,255,255,.86)}
+.hero .facts svg{stroke:#b9d4ad}
+.hero .btn-dark{background:#fff;color:var(--ink);border-color:#fff}
+.hero .btn-dark:hover{background:var(--leaf-2);border-color:var(--leaf-2);color:#fff}
+.hero .btn-ghost{color:#fff;border-color:rgba(255,255,255,.75)}
+.hero .btn-ghost:hover{background:#fff;color:var(--ink)}
+.hero-art .leaf{opacity:.82}
+.hero-art .tag{color:var(--ink)}
+@media (max-width:860px){
+  .hero{min-height:0;padding:56px 0 48px}
+  .shot{width:200px;height:170px}.shot:nth-child(3n+2){width:160px}.shot:nth-child(4n){width:230px}
+  .hero-shade{background:rgba(14,14,13,.74)}
+}
+@media (prefers-reduced-motion:reduce){.track{animation:none}}
+
+/* ---------- Notice ---------- */
+.notice{background:var(--holiday);color:#fff}
+.notice .wrap{display:flex;align-items:center;justify-content:center;gap:14px;padding:12px 20px;font-size:14px;text-align:center;flex-wrap:wrap}
+.notice b{font-family:var(--script);font-size:28px;font-weight:400;line-height:1}
+
+/* ---------- Menu ---------- */
+section{padding:64px 0}
+.sec-head{text-align:center;margin-bottom:34px}
+.sec-head h2{font-family:var(--serif);font-weight:500;font-size:clamp(32px,4.5vw,46px);line-height:1.1}
+.sec-head h2 em{font-family:var(--script);font-style:normal;font-weight:400;font-size:1.3em;color:var(--leaf)}
+.sec-head p{color:var(--muted);margin-top:8px}
+.tabs{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:34px;position:sticky;top:70px;z-index:30;background:var(--paper);padding:12px 0}
+.tab{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:10px 18px;font-size:14px;color:var(--ink-2);transition:.15s}
+.tab:hover{border-color:var(--ink)}
+.tab.active{background:var(--ink);border-color:var(--ink);color:#fff}
+.cat{margin-bottom:52px;scroll-margin-top:150px}
+.cat-title{display:flex;align-items:baseline;gap:14px;margin-bottom:20px;border-bottom:1px solid var(--line);padding-bottom:10px}
+.cat-title h3{font-family:var(--serif);font-size:30px;font-weight:600}
+.cat-title span{color:var(--muted);font-size:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px}
+.item{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column;transition:.2s}
+.item:hover{transform:translateY(-3px);box-shadow:0 18px 40px rgba(20,20,20,.08)}
+.thumb{aspect-ratio:16/10;position:relative;display:grid;place-items:center;overflow:hidden}
+.thumb img{width:100%;height:100%;object-fit:cover}
+.thumb .ph{font-family:var(--script);font-size:46px;color:rgba(255,255,255,.9);transform:rotate(-5deg)}
+.thumb.g1{background:linear-gradient(135deg,#2f4a2c,#4f7546)}
+.thumb.g2{background:linear-gradient(135deg,#9e1b1f,#c2412f)}
+.thumb.g3{background:linear-gradient(135deg,#141414,#3d3d3a)}
+.thumb.g4{background:linear-gradient(135deg,#8a6a3b,#c39a5a)}
+.badge{position:absolute;top:12px;left:12px;background:#fff;color:var(--ink);font-size:11px;letter-spacing:.12em;text-transform:uppercase;padding:5px 10px;border-radius:999px;font-weight:500}
+.body{padding:18px 20px 20px;display:flex;flex-direction:column;flex:1}
+.body h4{font-family:var(--serif);font-size:24px;font-weight:600;line-height:1.15}
+.pax{font-size:13px;color:var(--leaf-2);font-weight:500;margin-top:2px}
+.body ul{list-style:none;margin:12px 0 0;font-size:14px;color:var(--ink-2)}
+.body ul li{padding:3px 0 3px 16px;position:relative}
+.body ul li::before{content:"";position:absolute;left:0;top:12px;width:6px;height:1.5px;background:var(--leaf-2)}
+.body p.desc{font-size:14px;color:var(--ink-2);margin-top:8px}
+.variants{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
+.variants button{border:1.5px solid var(--line);background:#fff;border-radius:8px;padding:7px 11px;font-size:13px;color:var(--ink-2)}
+.variants button.on{border-color:var(--ink);color:var(--ink);background:var(--leaf-soft)}
+.foot{display:flex;align-items:center;justify-content:space-between;margin-top:auto;padding-top:18px}
+.price{font-family:var(--serif);font-size:26px;font-weight:600}
+.price small{font-family:var(--sans);font-size:12px;color:var(--muted);font-weight:400;display:block;line-height:1}
+.add{background:var(--ink);color:#fff;border:0;border-radius:999px;padding:10px 18px;font-size:14px;transition:.15s}
+.add:hover{background:var(--leaf)}
+.add.ask{background:#fff;color:var(--ink);border:1.5px solid var(--ink)}
+.add.ask:hover{background:var(--ink);color:#fff}
+.fine{font-size:13px;color:var(--muted);text-align:center;margin-top:-20px}
+
+/* ---------- About / Contact ---------- */
+.about{background:var(--ink);color:#f2efe8}
+.about-grid{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center}
+.about h2{font-family:var(--serif);font-weight:500;font-size:clamp(32px,4.5vw,46px);line-height:1.1}
+.about h2 em{font-family:var(--script);font-style:normal;font-weight:400;font-size:1.35em;color:#cfe0c8}
+.about p{color:#c9c5bb;margin-top:16px;font-weight:300;font-size:17px}
+.svc{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.svc div{border:1px solid #33332f;border-radius:var(--radius);padding:22px}
+.svc h4{font-family:var(--serif);font-size:22px;font-weight:600;color:#fff}
+.svc p{font-size:14px;margin-top:6px}
+.contact{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.contact a,.contact div{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:24px;text-decoration:none;display:block}
+.contact small{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+.contact b{display:block;font-family:var(--serif);font-size:22px;font-weight:600;margin-top:6px}
+footer{border-top:1px solid var(--line);padding:34px 0;text-align:center;color:var(--muted);font-size:13px}
+footer .mark{width:64px;height:64px;margin-bottom:12px}
+footer .mark span{font-size:34px}
+
+/* ---------- Cart drawer ---------- */
+.overlay{position:fixed;inset:0;background:rgba(20,20,20,.45);opacity:0;pointer-events:none;transition:.25s;z-index:60}
+.overlay.show{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:0;height:100%;width:min(440px,100%);background:var(--paper);z-index:70;transform:translateX(100%);transition:.3s ease;display:flex;flex-direction:column}
+.drawer.show{transform:none}
+.dh{display:flex;align-items:center;justify-content:space-between;padding:20px 22px;border-bottom:1px solid var(--line)}
+.dh h3{font-family:var(--serif);font-size:28px;font-weight:600}
+.x{background:none;border:0;font-size:26px;line-height:1;color:var(--ink-2)}
+.db{flex:1;overflow:auto;padding:16px 22px}
+.empty{text-align:center;color:var(--muted);padding:60px 0}
+.empty .mark{width:80px;height:80px;margin-bottom:16px}
+.empty .mark span{font-size:40px}
+.line{display:grid;grid-template-columns:1fr auto;gap:6px 12px;padding:14px 0;border-bottom:1px solid var(--line)}
+.line b{font-weight:500}
+.line .v{font-size:13px;color:var(--muted)}
+.qty{display:flex;align-items:center;gap:10px}
+.qty button{width:28px;height:28px;border-radius:50%;border:1.5px solid var(--line);background:#fff;font-size:16px;line-height:1}
+.lp{text-align:right;font-family:var(--serif);font-size:19px;font-weight:600}
+.df{border-top:1px solid var(--line);padding:18px 22px;background:#fff}
+.tot{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.tot span{font-size:14px;color:var(--muted)}
+.tot b{font-family:var(--serif);font-size:30px;font-weight:600}
+.df .note{font-size:12px;color:var(--muted);margin-bottom:14px}
+.full{width:100%;justify-content:center}
+form.co{display:grid;gap:12px}
+form.co label{font-size:13px;color:var(--ink-2);display:grid;gap:5px}
+form.co input,form.co select,form.co textarea{font:inherit;font-size:15px;padding:11px 12px;border:1.5px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);width:100%}
+form.co input:focus,form.co select:focus,form.co textarea:focus{outline:none;border-color:var(--leaf)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.seg input{display:none}
+.seg label{border:1.5px solid var(--line);border-radius:10px;padding:10px;text-align:center;cursor:pointer;display:block}
+.seg input:checked+label{border-color:var(--ink);background:var(--leaf-soft);color:var(--ink)}
+.check{display:flex!important;grid-template-columns:none!important;align-items:center;gap:10px}
+.check input{width:auto}
+.back{background:none;border:0;color:var(--muted);font-size:14px;margin-bottom:6px;text-align:left}
+
+.toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,120px);background:var(--ink);color:#fff;padding:12px 20px;border-radius:999px;font-size:14px;z-index:80;transition:.3s}
+.toast.show{transform:translate(-50%,0)}
+.fab{position:fixed;right:18px;bottom:18px;z-index:50;width:58px;height:58px;border-radius:50%;background:#25d366;display:grid;place-items:center;box-shadow:0 10px 24px rgba(0,0,0,.2)}
+.fab svg{width:30px;height:30px;fill:#fff}
+
+@media (max-width:860px){
+  .nav-links{display:none}
+  .hero{padding:40px 0}
+  .hero-grid,.about-grid{grid-template-columns:1fr}
+  .hero-art{max-width:300px}
+  .contact{grid-template-columns:1fr}
+  .svc{grid-template-columns:1fr}
+  .tabs{justify-content:flex-start;overflow-x:auto;flex-wrap:nowrap;padding:12px 4px}
+  .tab{white-space:nowrap}
+  .grid{grid-template-columns:1fr}
+  .brand small{display:none}
+  .fab{bottom:84px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <a class="brand" href="#top">
+      <div class="mark"><span>Febys</span></div>
+      <div><b>Febys</b><small>Corniche Deira · Dubai</small></div>
+    </a>
+    <nav class="nav-links">
+      <a href="#menu">Menu</a>
+      <a href="#about">Catering</a>
+      <a href="#contact">Contact</a>
+    </nav>
+    <button class="cart-btn" id="openCart" aria-label="Open order">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 7h12l-1 13H7L6 7Z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>
+      Order <span class="count" id="cartCount">0</span>
+    </button>
+  </div>
+</header>
+
+<div class="notice" id="top">
+  <div class="wrap"><b>Holiday Packages</b> are back — available every day. Advance booking required.</div>
+</div>
+
+<section class="hero">
+  <div class="hero-bg" aria-hidden="true">
+    <div class="lane" id="lane1"><div class="track"></div></div>
+    <div class="lane reverse" id="lane2"><div class="track"></div></div>
+    <div class="lane slow" id="lane3"><div class="track"></div></div>
+    <div class="lane reverse slow" id="lane4"><div class="track"></div></div>
+    <div class="lane" id="lane5"><div class="track"></div></div>
+    <div class="lane reverse" id="lane6"><div class="track"></div></div>
+  </div>
+  <div class="hero-shade"></div>
+  <div class="wrap hero-grid">
+    <div>
+      <div class="eyebrow">Filipino Restaurant · Food Trays · Catering</div>
+      <h1>Food from my <em>home</em><br>to your hearts.</h1>
+      <p class="lead">Freshly cooked, home-style Filipino favourites — lechon, crispy pata, kare-kare and more — in trays made for the whole family and barkada.</p>
+      <div class="hero-cta">
+        <a class="btn btn-dark" href="#menu">Browse the menu</a>
+        <a class="btn btn-ghost" href="https://wa.me/971563267346" target="_blank" rel="noopener">WhatsApp us</a>
+      </div>
+      <div class="facts">
+        <div><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Always open</div>
+        <div><svg viewBox="0 0 24 24"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7z"/><circle cx="7" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/></svg>Delivery &amp; takeout</div>
+        <div><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/></svg>Card payments accepted</div>
+      </div>
+    </div>
+    <div class="hero-art">
+      <div class="leaf"></div>
+      <div class="mark"><span>Febys</span></div>
+      <div class="tag t1">★ 90% recommend</div>
+      <div class="tag t2">Lutong bahay 🍃</div>
+    </div>
+  </div>
+</section>
+
+<section id="menu" style="padding-top:20px">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>Our <em>Menu</em></h2>
+      <p>Tap to add, then send your order straight to us on WhatsApp.</p>
+    </div>
+    <div class="tabs" id="tabs"></div>
+    <div id="menuRoot"></div>
+    <p class="fine">Prices exclude delivery charges. Chafing dish rental is charged separately. Pricing is subject to change based on availability.</p>
+  </div>
+</section>
+
+<section class="about" id="about">
+  <div class="wrap about-grid">
+    <div>
+      <div class="eyebrow" style="color:#a9c79f">Orders · Catering · Events</div>
+      <h2>Hassle-free <em>parties</em>,<br>Filipino style.</h2>
+      <p>From intimate family dinners to office gatherings of 30 or more, we cook everything fresh and deliver it ready to share. Need buffet setup? Ask about chafing dishes and full catering service.</p>
+      <div class="hero-cta"><a class="btn" style="background:#fff;color:var(--ink);border-color:#fff" href="https://wa.me/971563267346?text=Hi%20Febys!%20I'd%20like%20to%20ask%20about%20catering%20for%20an%20event." target="_blank" rel="noopener">Ask about catering</a></div>
+    </div>
+    <div class="svc">
+      <div><h4>Food Trays</h4><p>Half and big trays of your favourite ulam, pancit and kakanin.</p></div>
+      <div><h4>Party Packages</h4><p>Ready-made spreads for 4 to 30 guests.</p></div>
+      <div><h4>Lechon &amp; Cochinillo</h4><p>Whole roast pig by weight, lechon belly roll and lechon ulo.</p></div>
+      <div><h4>Events</h4><p>Buffet catering with chafing dish setup for celebrations.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="contact">
+  <div class="wrap">
+    <div class="sec-head"><h2>Visit or <em>message</em> us</h2></div>
+    <div class="contact">
+      <a href="https://wa.me/971563267346" target="_blank" rel="noopener"><small>WhatsApp / Call</small><b>056 326 7346</b></a>
+      <a href="mailto:info.febyskitchen@gmail.com"><small>Email</small><b>info.febyskitchen@gmail.com</b></a>
+      <a href="https://maps.google.com/?q=Al+Rigga+Corniche+Deira+Dubai" target="_blank" rel="noopener"><small>Find us</small><b>Al Rigga, Corniche Deira</b></a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="mark"><span>Febys</span></div>
+  <div>Great tasting food at a great price.</div>
+  <div style="margin-top:6px">© <span id="yr"></span> Febys · Dubai, UAE</div>
+</footer>
+
+<a class="fab" href="https://wa.me/971563267346" target="_blank" rel="noopener" aria-label="WhatsApp Febys">
+  <svg viewBox="0 0 32 32"><path d="M16 3a13 13 0 0 0-11.2 19.6L3 29l6.6-1.7A13 13 0 1 0 16 3Zm0 23.7c-2 0-4-.6-5.7-1.6l-.4-.2-3.9 1 1-3.8-.3-.4A10.7 10.7 0 1 1 16 26.7Zm5.9-8c-.3-.2-1.9-.9-2.2-1-.3-.1-.5-.2-.7.2l-1 1.2c-.2.2-.4.2-.7.1a8.8 8.8 0 0 1-4.4-3.8c-.3-.6.3-.5.9-1.7.1-.2 0-.4 0-.5l-1-2.4c-.3-.6-.5-.5-.7-.5h-.6c-.2 0-.6.1-.9.4-.3.3-1.1 1.1-1.1 2.7s1.2 3.2 1.3 3.4c.2.2 2.3 3.5 5.6 4.9 2.1.9 2.9 1 4 .8.6-.1 1.9-.8 2.2-1.5.3-.8.3-1.4.2-1.5l-.6-.3Z"/></svg>
+</a>
+
+<div class="overlay" id="overlay"></div>
+<aside class="drawer" id="drawer" aria-label="Your order">
+  <div class="dh"><h3 id="dTitle">Your order</h3><button class="x" id="closeCart" aria-label="Close">×</button></div>
+  <div class="db" id="dBody"></div>
+  <div class="df" id="dFoot"></div>
+</aside>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   MENU DATA — edit items, prices and photos here.
+   photo: put an image path/URL to replace the placeholder.
+   price: null = "price on request" (sent as an inquiry).
+   ============================================================ */
+const WHATSAPP = "971563267346";
+const MENU = [
+  { id:"combos", name:"Holiday Combos", note:"Bundles for gatherings", items:[
+    { id:"c1", name:"Combo 1", price:180, tone:"g2", list:["1 kilo Lechon Kawali / Crispy Pata","Feby's Fried Chicken","Shanghai (30 pcs)"] },
+    { id:"c2", name:"Combo 2", price:250, tone:"g2", list:["1 kilo Lechon Roll","1 kilo Lechon Kawali / Crispy Pata","Feby's Fried Chicken","Shanghai (30 pcs)"] },
+    { id:"c3", name:"Combo 3", price:360, tone:"g2", list:["1 kilo Lechon Roll","1 Half Tray Kaldereta / Kare-Kare","1 Half Tray Sisig","Feby's Fried Chicken","Shanghai (30 pcs)"] },
+    { id:"c4", name:"Combo 4", price:430, tone:"g2", list:["1 kilo Lechon Roll","1 Relyenong Bangus","1 Half Tray Kaldereta","1 Half Tray Sisig","Feby's Fried Chicken","Shanghai (30 pcs)"] },
+    { id:"c5", name:"Combo 5", price:720, tone:"g2", badge:"Best for big groups", list:["2 kilos Lechon","1 Tray BBQ (12 pcs)","1 Half Tray Sisig","1 Half Tray Kaldereta / Kare-Kare","Shanghai (30 pcs)","1 Half Tray Kakanin","1 Big Tray Pansit"] },
+    { id:"c6", name:"Combo 6", price:1200, tone:"g2", badge:"Ultimate feast", list:["2 kilos Lechon","1 kilo Lechon Kawali / Crispy Pata","1 Tray BBQ (12 pcs)","1 Half Tray Sisig","1 Half Tray Chicken Cordon Bleu","1 Half Tray Kaldereta","1 Half Tray Kare-Kare","Shanghai (30 pcs)","2 Half Tray Kakanin","1 Big Tray Pansit","1 Big Tray Pasta"] },
+  ]},
+  { id:"packages", name:"Party Packages", note:"Complete spreads by guest count", items:[
+    { id:"pa", name:"Package A", pax:"4–6 pax", price:450, tone:"g1", list:["1 Half Tray Pasta / Noodles","1 Tray Rice","1 kilo Lechon Belly Roll","2 Half Tray Main Course","1 Half Tray Kakanin"] },
+    { id:"pb", name:"Package B", pax:"10–12 pax", price:800, tone:"g1", list:["1 Big Tray Pasta / Noodles","1 Big Tray Rice","2 kilos Lechon Belly Roll","2 Big Tray Main Course","1 Half Tray Kakanin"] },
+    { id:"pc", name:"Package C", pax:"15–20 pax", price:1300, tone:"g1", badge:"Popular", list:["2 Big Tray Pasta / Noodles","2 Big Tray Rice","3 kilos Lechon Belly Roll","3 Big Tray Main Course","2 Half Tray Kakanin"] },
+    { id:"pd", name:"Package D", pax:"30 pax", price:2000, tone:"g1", list:["1 Big Tray Salad","3 Big Tray Pasta / Noodles","3 Big Tray Rice","4 kilos Lechon Belly Roll","4 Big Tray Main Course","2 Half Tray Kakanin","1 Big Tray Dessert"] },
+  ]},
+  { id:"specials", name:"Specials", note:"Lechon & cochinillo", items:[
+    { id:"coch", name:"Cochinillo", tone:"g3", badge:"Whole roast pig", desc:"Whole roasted suckling pig with crackling skin. Choose the size.",
+      variants:[{label:"8 kilos",price:900},{label:"9 kilos",price:1000},{label:"10 kilos",price:1100},{label:"11 kilos",price:1200}] },
+    { id:"ulo", name:"Lechon Ulo", tone:"g3", desc:"Roasted lechon head. Final price depends on size — we'll confirm on WhatsApp.",
+      variants:[{label:"Half",price:150,range:"150–200"},{label:"Whole",price:300,range:"300–350"}] },
+  ]},
+  { id:"trays", name:"Food Trays", note:"Ask us for today's prices", items:[
+    { id:"t1", name:"Lechon Kawali / Crispy Pata", tone:"g4", price:null, desc:"Deep-fried pork belly or pork knuckle, served with sauce." },
+    { id:"t2", name:"Lechon Belly Roll", tone:"g4", price:null, desc:"Herb-stuffed rolled pork belly, roasted until crisp." },
+    { id:"t3", name:"Kare-Kare", tone:"g4", price:null, desc:"Oxtail and vegetables in rich peanut sauce with bagoong." },
+    { id:"t4", name:"Kaldereta", tone:"g4", price:null, desc:"Tomato-based stew with potatoes, carrots and cheese." },
+    { id:"t5", name:"Sisig", tone:"g4", price:null, desc:"Sizzling chopped pork with onions, chili and calamansi." },
+    { id:"t6", name:"Pork BBQ Sticks", tone:"g4", price:null, desc:"Sweet, smoky Filipino-style barbecue skewers." },
+    { id:"t7", name:"Lumpia Shanghai", tone:"g4", price:null, desc:"Crispy pork spring rolls with sweet chili dip." },
+    { id:"t8", name:"Chicken Cordon Bleu", tone:"g4", price:null, desc:"Breaded chicken rolls with ham and cheese." },
+    { id:"t9", name:"Pancit", tone:"g4", price:null, desc:"Stir-fried noodles with vegetables, meat and calamansi." },
+    { id:"t10", name:"Kakanin", tone:"g4", price:null, desc:"Assorted Filipino rice cakes." },
+  ]},
+];
+
+/* ---------- state ---------- */
+let cart = [];
+try { cart = JSON.parse(localStorage.getItem("febys_cart")||"[]"); } catch(e){ cart=[]; }
+const save = () => { try{ localStorage.setItem("febys_cart", JSON.stringify(cart)); }catch(e){} };
+const chosen = {}; // selected variant per item
+const fmt = n => "AED " + n.toLocaleString("en-US");
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* ---------- render menu ---------- */
+function renderMenu(){
+  $("#tabs").innerHTML = MENU.map((c,i)=>`<button class="tab${i?"":" active"}" data-cat="${c.id}">${esc(c.name)}</button>`).join("");
+  $("#menuRoot").innerHTML = MENU.map(c=>`
+    <div class="cat" id="cat-${c.id}">
+      <div class="cat-title"><h3>${esc(c.name)}</h3><span>${esc(c.note)}</span></div>
+      <div class="grid">${c.items.map(card).join("")}</div>
+    </div>`).join("");
+}
+function card(it){
+  if(it.variants && chosen[it.id]==null) chosen[it.id]=0;
+  const v = it.variants ? it.variants[chosen[it.id]] : null;
+  const price = v ? v.price : it.price;
+  const priceHtml = v && v.range ? `<div class="price"><small>from</small>AED ${v.range}</div>`
+                  : price==null ? `<div class="price" style="font-size:18px"><small>Price</small>on request</div>`
+                  : `<div class="price">${fmt(price)}</div>`;
+  return `<article class="item" data-id="${it.id}">
+    <div class="thumb ${it.tone||"g1"}">
+      ${it.photo ? `<img src="${esc(it.photo)}" alt="${esc(it.name)}" loading="lazy">` : `<span class="ph">${esc(it.name.split(" ")[0])}</span>`}
+      ${it.badge?`<span class="badge">${esc(it.badge)}</span>`:""}
+    </div>
+    <div class="body">
+      <h4>${esc(it.name)}</h4>
+      ${it.pax?`<div class="pax">Good for ${esc(it.pax)}</div>`:""}
+      ${it.desc?`<p class="desc">${esc(it.desc)}</p>`:""}
+      ${it.list?`<ul>${it.list.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
+      ${it.variants?`<div class="variants">${it.variants.map((x,i)=>`<button class="${i===chosen[it.id]?"on":""}" data-var="${i}">${esc(x.label)}</button>`).join("")}</div>`:""}
+      <div class="foot">${priceHtml}
+        <button class="add${price==null?" ask":""}" data-add="${it.id}">${price==null?"Add to inquiry":"Add"}</button>
+      </div>
+    </div>
+  </article>`;
+}
+function findItem(id){ for(const c of MENU) for(const it of c.items) if(it.id===id) return it; }
+
+document.addEventListener("click", e=>{
+  const tab = e.target.closest(".tab");
+  if(tab){ document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t===tab));
+           document.getElementById("cat-"+tab.dataset.cat).scrollIntoView({behavior:"smooth"}); return; }
+  const vb = e.target.closest("[data-var]");
+  if(vb){ const art = vb.closest(".item"); const it = findItem(art.dataset.id);
+          chosen[it.id] = +vb.dataset.var; art.outerHTML = card(it); return; }
+  const ab = e.target.closest("[data-add]");
+  if(ab){ addToCart(ab.dataset.add); }
+});
+
+/* ---------- cart ---------- */
+function addToCart(id){
+  const it = findItem(id);
+  const v = it.variants ? it.variants[chosen[id]] : null;
+  const key = id + (v?"|"+v.label:"");
+  const ex = cart.find(l=>l.key===key);
+  if(ex) ex.qty++;
+  else cart.push({ key, name:it.name, variant:v?v.label:"", price:v?v.price:it.price, range:v&&v.range?v.range:"", qty:1 });
+  save(); updateCount(); toast(`${it.name}${v?" · "+v.label:""} added`);
+}
+function updateCount(){ $("#cartCount").textContent = cart.reduce((s,l)=>s+l.qty,0); }
+function total(){ return cart.reduce((s,l)=>s+(l.price||0)*l.qty,0); }
+const hasEstimates = () => cart.some(l=>l.price==null || l.range);
+
+function openCart(){ $("#overlay").classList.add("show"); $("#drawer").classList.add("show"); renderCart(); }
+function closeCart(){ $("#overlay").classList.remove("show"); $("#drawer").classList.remove("show"); }
+$("#openCart").onclick = openCart; $("#closeCart").onclick = closeCart; $("#overlay").onclick = closeCart;
+
+function renderCart(){
+  $("#dTitle").textContent = "Your order";
+  if(!cart.length){
+    $("#dBody").innerHTML = `<div class="empty"><div class="mark"><span>Febys</span></div><p>Your order is empty.<br>Add something delicious from the menu.</p></div>`;
+    $("#dFoot").innerHTML = `<button class="btn btn-dark full" onclick="closeCart()">Browse menu</button>`;
+    return;
+  }
+  $("#dBody").innerHTML = cart.map((l,i)=>`
+    <div class="line">
+      <div><b>${esc(l.name)}</b>${l.variant?`<div class="v">${esc(l.variant)}</div>`:""}</div>
+      <div class="lp">${l.price==null?"<span style='font-size:13px;color:var(--muted)'>on request</span>":l.range?`AED ${l.range}`:fmt(l.price*l.qty)}</div>
+      <div class="qty"><button data-q="${i}" data-d="-1">−</button><span>${l.qty}</span><button data-q="${i}" data-d="1">+</button></div>
+      <div></div>
+    </div>`).join("");
+  $("#dFoot").innerHTML = `
+    <div class="tot"><span>${hasEstimates()?"Estimated subtotal":"Subtotal"}</span><b>${fmt(total())}</b></div>
+    <div class="note">Excludes delivery${hasEstimates()?"; final prices for some items confirmed on WhatsApp":""}. Advance booking required.</div>
+    <button class="btn btn-dark full" id="toCheckout">Continue to details</button>`;
+  $("#toCheckout").onclick = renderCheckout;
+}
+$("#dBody").addEventListener("click", e=>{
+  const b = e.target.closest("[data-q]"); if(!b) return;
+  const l = cart[+b.dataset.q]; l.qty += +b.dataset.d;
+  if(l.qty<=0) cart.splice(+b.dataset.q,1);
+  save(); updateCount(); renderCart();
+});
+
+function renderCheckout(){
+  $("#dTitle").textContent = "Your details";
+  const min = new Date(Date.now()+86400000).toISOString().slice(0,10);
+  $("#dBody").innerHTML = `
+    <button class="back" id="back">← Back to order</button>
+    <form class="co" id="co">
+      <label>Full name<input name="name" required autocomplete="name"></label>
+      <label>Mobile / WhatsApp<input name="phone" required type="tel" placeholder="05X XXX XXXX" autocomplete="tel"></label>
+      <div class="seg">
+        <input type="radio" name="mode" id="m1" value="Delivery" checked><label for="m1">Delivery</label>
+        <input type="radio" name="mode" id="m2" value="Pickup"><label for="m2">Pickup</label>
+      </div>
+      <label id="addrWrap">Delivery address<textarea name="address" rows="2" placeholder="Building, street, area"></textarea></label>
+      <div class="row2">
+        <label>Date<input name="date" type="date" required min="${min}" value="${min}"></label>
+        <label>Time<input name="time" type="time" required value="12:00"></label>
+      </div>
+      <label class="check"><input type="checkbox" name="chafing"> Add chafing dish rental (extra charge)</label>
+      <label>Notes<textarea name="notes" rows="2" placeholder="Occasion, allergies, special requests"></textarea></label>
+    </form>`;
+  $("#dFoot").innerHTML = `
+    <div class="tot"><span>${hasEstimates()?"Estimated subtotal":"Subtotal"}</span><b>${fmt(total())}</b></div>
+    <div class="note">We'll confirm availability, delivery fee and final total on WhatsApp.</div>
+    <button class="btn btn-dark full" id="send">Send order on WhatsApp</button>`;
+  $("#back").onclick = renderCart;
+  document.querySelectorAll('input[name=mode]').forEach(r=>r.onchange=()=>{
+    $("#addrWrap").style.display = $("#m1").checked ? "" : "none";
+  });
+  $("#send").onclick = sendOrder;
+}
+
+function sendOrder(){
+  const f = $("#co");
+  if(!f.reportValidity()) return;
+  const d = Object.fromEntries(new FormData(f));
+  if(d.mode==="Delivery" && !d.address.trim()){ toast("Please add a delivery address"); return; }
+  const lines = cart.map(l=>{
+    const p = l.price==null ? "price on request" : l.range ? `AED ${l.range}` : fmt(l.price*l.qty);
+    return `• ${l.qty} × ${l.name}${l.variant?` (${l.variant})`:""} — ${p}`;
+  });
+  const msg = [
+    "Hi Febys! I'd like to place an order:", "",
+    ...lines, "",
+    `${hasEstimates()?"Estimated subtotal":"Subtotal"}: ${fmt(total())}`,
+    d.chafing ? "+ Chafing dish rental" : "", "",
+    `Name: ${d.name}`, `Phone: ${d.phone}`, `${d.mode}: ${d.date} at ${d.time}`,
+    d.mode==="Delivery" ? `Address: ${d.address}` : "",
+    d.notes ? `Notes: ${d.notes}` : ""
+  ].filter((x,i,a)=>!(x==="" && a[i-1]==="")).join("\n");
+  window.open(`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(msg)}`, "_blank");
+  cart = []; save(); updateCount(); closeCart(); toast("Opening WhatsApp…");
+}
+
+let tt; function toast(t){ const el=$("#toast"); el.textContent=t; el.classList.add("show"); clearTimeout(tt); tt=setTimeout(()=>el.classList.remove("show"),1800); }
+
+/* ============================================================
+   FOOD GALLERY — photos live in the photos/ folder next to this
+   file (febys-01.jpg … febys-16.jpg). Edit labels/order here.
+   ============================================================ */
+const GALLERY = ["Lechon kawali","Chopsuey","Crispy pork","Roast chicken","Chicken cordon bleu","Pancit",
+  "Party trays","Lechon","Food trays","Kaldereta","Crispy kare-kare","Catering buffet",
+  "Pork BBQ","Kare-kare","Filipino feast","Fried chicken & pork"];
+function buildParade(){
+  const shot = i => `<div class="shot"><img src="photos/febys-${String(i+1).padStart(2,"0")}.jpg" alt="${esc(GALLERY[i])}"></div>`;
+  const n = GALLERY.length;
+  // three rows, each starting at a different photo so they don't line up
+  [["#lane1",0],["#lane2",6],["#lane3",11],["#lane4",3],["#lane5",9],["#lane6",13]].forEach(([sel,start])=>{
+    const order = Array.from({length:n},(_,k)=>(start+k)%n);
+    const html = order.map(shot).join("");
+    $(sel+" .track").innerHTML = html + html; // doubled for a seamless loop
+  });
+}
+buildParade();
+
+$("#yr").textContent = new Date().getFullYear();
+renderMenu(); updateCount();
+</script>
+</body>
+</html>
