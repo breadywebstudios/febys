@@ -308,7 +308,14 @@ const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt
 const money = n => "AED " + Number(n).toLocaleString("en-US", { maximumFractionDigits: 2 });
 let toastT;
 function toast(t, err){ const el=$("#toast"); el.textContent=t; el.classList.toggle("err",!!err); el.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(()=>el.classList.remove("show"), err?4200:2200); }
-function fail(e, what){ console.error(e); toast((what?what+": ":"") + (e?.message || "Something went wrong"), true); }
+function fail(e, what){
+  console.error(e);
+  const message=e?.message || "Something went wrong";
+  const detail=/failed to fetch|networkerror/i.test(message)
+    ? "Network request failed. Check your connection and admin sign-in, then reload and retry."
+    : message;
+  toast((what?what+": ":"") + detail, true);
+}
 const ICON = {
   up:'<svg viewBox="0 0 24 24"><path d="M6 15l6-6 6 6"/></svg>',
   down:'<svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>',
@@ -865,6 +872,11 @@ function forDate(o){
   return d.toLocaleDateString("en-GB", { weekday:"short", day:"numeric", month:"short", year:"numeric" })
        + (o.order_time ? ", " + d.toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit" }) : "");
 }
+function whatsappOrderDate(date, time){
+  if(!date) return "Not specified";
+  const d = new Date(date + "T" + (time || "12:00"));
+  return `${d.toLocaleDateString("en-GB", { weekday:"short", day:"numeric", month:"short", year:"numeric" })} · ⏰ ${d.toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit" })}`;
+}
 function itemPrice(i){
   if(i.price == null) return `<i style="color:var(--muted)">on request</i>`;
   if(i.range) return `AED ${esc(i.range)}${i.qty>1?` ×${i.qty}`:""}`;
@@ -1095,32 +1107,36 @@ function editOrder(id){
       (Number.isFinite(item.price)?item.price:0)*(Number.isFinite(item.qty)?item.qty:0),0);
     const estimated=current.some(item=>item.price==null||item.range);
     const line="━━━━━━━━━━━━━━━";
+    const count=current.reduce((sum,item)=>sum+item.qty,0);
     const itemLines=current.flatMap(item=>{
-      const price=item.price==null?"Price on request":item.range?`AED ${item.range}`:`AED ${(item.price*item.qty).toFixed(2)}`;
-      return [
-        `*${item.name}*${item.variant?` (${item.variant})`:""} ×${item.qty} — ${price}`,
-        item.pax?`Good for ${item.pax}`:"",
-        ...(item.includes||[]).map(include=>`• ${include}`)
-      ].filter(Boolean);
+      const price=item.price==null?"_price on request_":item.range?`AED ${item.range}`:money(item.price*item.qty);
+      const head=`*${item.name}*${item.variant?` (${item.variant})`:""}  ×${item.qty}\n     💵 ${price}${item.qty>1&&item.price!=null&&!item.range?` _(${money(item.price)} each)_`:""}`;
+      return [head,...(item.pax?[`     👥 Good for ${item.pax}`]:[]),...(item.includes||[]).map(include=>`     ▫️ ${include}`),""];
     });
-    const deliveryDate=date?forDate({order_date:date,order_time:time}):"Not specified";
+    const deliveryDate=whatsappOrderDate(date,time);
     const message=[
       `*UPDATED ORDER · FEBYS*`,
       `Ref: *${o.ref}*`,
       line,
-      `*ORDER DETAILS*`,
+      `*MY ORDER* (${count} item${count===1?"":"s"})`,
+      "",
       ...itemLines,
       line,
       `*${estimated?"Estimated subtotal":"Subtotal"}: ${money(subtotal)}*`,
-      `_Delivery fee and final total to be confirmed_`,
+      $("#editChafing").checked?"Chafing dish rental: *Yes please*":"",
+      `_Delivery fee & final total to be confirmed_`,
       line,
       `*CUSTOMER*`,
-      customer,
-      phone,
-      mode==="Delivery"?`*DELIVERY* · ${deliveryDate}\n${address}`:`*PICKUP* · ${deliveryDate}`,
-      $("#editChafing").checked?"Chafing dish rental requested":"",
-      notes?`*NOTES*\n${notes}`:""
-    ].filter(Boolean).join("\n");
+      `     ${customer}`,
+      `     📱 ${phone}`,
+      "",
+      mode==="Delivery"?"*DELIVERY*":"*PICKUP*",
+      `     📅 ${deliveryDate}`,
+      mode==="Delivery"?`     📍 ${address}`:"     📍 Febys, Al Rigga, Corniche Deira",
+      notes?`\n*NOTES*\n     ${notes}`:"",
+      line,
+      `Salamat po! Looking forward to it 🙏💚`
+    ].filter((value,index,all)=>!(value===""&&all[index-1]==="")).join("\n");
     window.open(`${waLink(recipient)}&text=${encodeURIComponent(message)}`,"_blank","noopener");
   };
   $("#saveOrderEdit").onclick=async()=>{
