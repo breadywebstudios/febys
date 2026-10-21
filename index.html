@@ -169,7 +169,7 @@ section{padding:64px 0}
 .svc div{border:1px solid #33332f;border-radius:var(--radius);padding:22px}
 .svc h4{font-family:var(--serif);font-size:22px;font-weight:600;color:#fff}
 .svc p{font-size:14px;margin-top:6px}
-.contact{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.contact{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px}
 .contact a,.contact div{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:24px;text-decoration:none;display:block}
 .contact small{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
 .contact b{display:block;font-family:var(--serif);font-size:22px;font-weight:600;margin-top:6px}
@@ -241,9 +241,6 @@ form.co input:focus,form.co select:focus,form.co textarea:focus{outline:none;bor
 
 .toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,120px);background:var(--ink);color:#fff;padding:12px 20px;border-radius:999px;font-size:14px;z-index:80;transition:.3s}
 .toast.show{transform:translate(-50%,0)}
-.fab{position:fixed;right:18px;bottom:18px;z-index:50;width:58px;height:58px;border-radius:50%;background:#25d366;display:grid;place-items:center;box-shadow:0 10px 24px rgba(0,0,0,.2)}
-.fab svg{width:30px;height:30px;fill:#fff}
-
 @media (max-width:860px){
   .nav-links{display:none}
   .hero{padding:40px 0}
@@ -255,7 +252,6 @@ form.co input:focus,form.co select:focus,form.co textarea:focus{outline:none;bor
   .tab{white-space:nowrap}
   .grid{grid-template-columns:1fr}
   .brand small{display:none}
-  .fab{bottom:84px}
 }
 </style>
 </head>
@@ -352,6 +348,7 @@ form.co input:focus,form.co select:focus,form.co textarea:focus{outline:none;bor
       <a href="https://wa.me/971563267346" target="_blank" rel="noopener"><small>WhatsApp / Call</small><b>056 326 7346</b></a>
       <a href="mailto:info.febyskitchen@gmail.com"><small>Email</small><b>info.febyskitchen@gmail.com</b></a>
       <a href="https://maps.google.com/?q=Al+Rigga+Corniche+Deira+Dubai" target="_blank" rel="noopener"><small>Find us</small><b>Al Rigga, Corniche Deira</b></a>
+      <a href="https://www.facebook.com/febyskitchenuae" target="_blank" rel="noopener"><small>Facebook</small><b>Febys Kitchen UAE</b></a>
     </div>
   </div>
 </section>
@@ -360,13 +357,8 @@ form.co input:focus,form.co select:focus,form.co textarea:focus{outline:none;bor
   <img class="mark" src="logo.jpg" alt="Febys logo">
   <div>Great tasting food at a great price.</div>
   <div style="margin-top:6px">© <span id="yr"></span> Febys · Dubai, UAE</div>
-  <a class="admin-link" href="https://www.facebook.com/febyskitchenuae" target="_blank" rel="noopener">Facebook page</a>
   <a class="admin-link" href="admin.html" target="_blank" rel="nofollow noopener"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Admin login</a>
 </footer>
-
-<a class="fab" href="https://wa.me/971563267346" target="_blank" rel="noopener" aria-label="WhatsApp Febys">
-  <svg viewBox="0 0 32 32"><path d="M16 3a13 13 0 0 0-11.2 19.6L3 29l6.6-1.7A13 13 0 1 0 16 3Zm0 23.7c-2 0-4-.6-5.7-1.6l-.4-.2-3.9 1 1-3.8-.3-.4A10.7 10.7 0 1 1 16 26.7Zm5.9-8c-.3-.2-1.9-.9-2.2-1-.3-.1-.5-.2-.7.2l-1 1.2c-.2.2-.4.2-.7.1a8.8 8.8 0 0 1-4.4-3.8c-.3-.6.3-.5.9-1.7.1-.2 0-.4 0-.5l-1-2.4c-.3-.6-.5-.5-.7-.5h-.6c-.2 0-.6.1-.9.4-.3.3-1.1 1.1-1.1 2.7s1.2 3.2 1.3 3.4c.2.2 2.3 3.5 5.6 4.9 2.1.9 2.9 1 4 .8.6-.1 1.9-.8 2.2-1.5.3-.8.3-1.4.2-1.5l-.6-.3Z"/></svg>
-</a>
 
 <div class="overlay" id="overlay"></div>
 <aside class="drawer" id="drawer" aria-label="Your order">
