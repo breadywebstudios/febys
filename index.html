@@ -601,6 +601,16 @@ function prettyDate(iso, time){
     return `${day} · ⏰ ${hr}`;
   }catch(e){ return `${iso} · ⏰ ${time}`; }
 }
+function saveOrder(order){
+  try{
+    fetch(`${SUPABASE_URL}/rest/v1/rpc/place_order`, {
+      method:"POST", keepalive:true,
+      headers:{ apikey:SUPABASE_KEY, "Content-Type":"application/json", "Content-Profile":"febys" },
+      body: JSON.stringify({ p: order })
+    }).then(r=>{ if(!r.ok) r.text().then(t=>console.warn("Order not saved:", t)); })
+      .catch(e=>console.warn("Order not saved:", e));
+  }catch(e){ console.warn("Order not saved:", e); }
+}
 function sendOrder(){
   const f = $("#co");
   if(!f.reportValidity()) return;
@@ -642,6 +652,15 @@ function sendOrder(){
     line,
     `Salamat po! Looking forward to it 🙏💚`
   ].filter((x,i,a)=>!(x==="" && a[i-1]==="")).join("\n");
+
+  // save a copy for the admin Orders page (runs in the background; WhatsApp opens regardless)
+  saveOrder({
+    ref, name: d.name.trim(), phone: d.phone.trim(), mode: d.mode,
+    address: d.mode==="Delivery" ? d.address.trim() : "", date: d.date, time: d.time,
+    chafing: !!d.chafing, notes: (d.notes||"").trim(),
+    subtotal: total(), has_estimates: hasEstimates(),
+    items: cart.map(l=>({ name:l.name, variant:l.variant||"", qty:l.qty, price:l.price, range:l.range||"", pax:l.pax||"", category:l.cat||"", includes:l.list||[] }))
+  });
 
   // api.whatsapp.com keeps emojis intact (wa.me can turn them into � on Windows)
   window.open(`https://api.whatsapp.com/send?phone=${WHATSAPP}&text=${encodeURIComponent(msg)}`, "_blank");
