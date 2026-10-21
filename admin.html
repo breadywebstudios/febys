@@ -985,10 +985,16 @@ function orderItemEditor(item={}, index=0){
   const categoryName = id=>S.cats.find(c=>c.id===id)?.name || "Uncategorized";
   const selected = S.items.find(it=>it.name===item.name && (!item.category || categoryName(it.category_id)===item.category));
   const custom = !selected;
+  const categories = S.cats.map(category=>({
+    name:category.name,
+    items:S.items.filter(it=>it.category_id===category.id)
+  })).filter(group=>group.items.length);
+  const uncategorized = S.items.filter(it=>!S.cats.some(category=>category.id===it.category_id));
+  if(uncategorized.length) categories.push({name:"Uncategorized",items:uncategorized});
   return `<div class="edit-item" data-edit-item="${index}">
     <label class="f f-name">Item name<select data-item-name>
       <option value="custom"${custom?" selected":""}>Custom item</option>
-      ${S.items.map(it=>`<option value="${it.id}"${selected?.id===it.id?" selected":""}>${esc(it.name)} · ${esc(categoryName(it.category_id))}${it.active?"":" (hidden)"}</option>`).join("")}
+      ${categories.map(group=>`<optgroup label="${esc(group.name)}">${group.items.map(it=>`<option value="${it.id}"${selected?.id===it.id?" selected":""}>${esc(it.name)}${it.active?"":" (hidden)"}</option>`).join("")}</optgroup>`).join("")}
     </select></label>
     <label class="f f-custom-name ${custom?"":"hidden"}">Custom item name<input type="text" data-item-field="custom-name" maxlength="200" value="${custom?esc(item.name||""):""}"${custom?" required":""}></label>
     <label class="f">Variant<input type="text" data-item-field="variant" value="${esc(item.variant||"")}"></label>
