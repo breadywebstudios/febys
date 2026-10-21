@@ -195,6 +195,7 @@ main{max-width:1180px;margin:0 auto;padding:26px 20px 80px}
 .ofoot textarea{flex:1;min-width:220px;min-height:38px;height:38px;font-size:13.5px;padding:8px 10px}
 .edit-items{display:grid;gap:10px}
 .edit-item{display:grid;grid-template-columns:2fr 1.2fr 90px 110px 1.3fr 36px;gap:8px;align-items:end;padding:12px;border:1px solid var(--line);border-radius:12px;background:#fff}
+.edit-item .f-menu-item{grid-column:1/-1}
 .edit-item .f-includes{grid-column:1/-2}
 .edit-item .remove-item{height:40px}
 .edit-order-checks{display:flex;gap:18px;flex-wrap:wrap}
@@ -968,7 +969,13 @@ function renderOrders(){
   });
 }
 function orderItemEditor(item={}, index=0){
+  const categoryName = id=>S.cats.find(c=>c.id===id)?.name || "Uncategorized";
+  const selected = S.items.find(it=>it.name===item.name && (!item.category || categoryName(it.category_id)===item.category));
   return `<div class="edit-item" data-edit-item="${index}">
+    <label class="f f-menu-item">Existing menu item<select data-menu-item>
+      <option value="">Choose an item…</option>
+      ${S.items.map(it=>`<option value="${it.id}"${selected?.id===it.id?" selected":""}>${esc(it.name)} · ${esc(categoryName(it.category_id))}${it.active?"":" (hidden)"}</option>`).join("")}
+    </select></label>
     <label class="f">Item name<input type="text" data-item-field="name" maxlength="200" value="${esc(item.name||"")}" required></label>
     <label class="f">Variant<input type="text" data-item-field="variant" value="${esc(item.variant||"")}"></label>
     <label class="f">Quantity<input type="number" data-item-field="qty" min="1" step="1" value="${esc(item.qty||1)}" required></label>
@@ -1011,6 +1018,19 @@ function editOrder(id){
     <div class="mf"><button class="btn ghost" data-close>Cancel</button><button class="btn" id="saveOrderEdit">Save changes</button></div>`);
   const renderItems = rows => {
     $("#editItems").innerHTML = rows.map(orderItemEditor).join("");
+    $("#editItems").querySelectorAll("[data-menu-item]").forEach(select=>select.onchange=()=>{
+      const it=S.items.find(x=>x.id===Number(select.value));
+      if(!it) return;
+      const row=select.closest(".edit-item");
+      const variant=it.variants?.[0];
+      row.querySelector('[data-item-field="name"]').value=it.name;
+      row.querySelector('[data-item-field="variant"]').value=variant?.label||"";
+      row.querySelector('[data-item-field="price"]').value=variant?.price??it.price??"";
+      row.querySelector('[data-item-field="range"]').value=variant?.range||"";
+      row.querySelector('[data-item-field="pax"]').value=it.pax||"";
+      row.querySelector('[data-item-field="category"]').value=S.cats.find(c=>c.id===it.category_id)?.name||"";
+      row.querySelector('[data-item-field="includes"]').value=Array.isArray(it.includes)?it.includes.join("\n"):"";
+    });
     $("#editItems").querySelectorAll("[data-item-remove]").forEach(b=>b.onclick=()=>{
       const current = readItems();
       current.splice(+b.dataset.itemRemove,1);
