@@ -171,8 +171,10 @@ section{padding:64px 0}
 .svc p{font-size:14px;margin-top:6px}
 .contact{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px}
 .contact a,.contact div{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:24px;text-decoration:none;display:block}
+.contact a{min-width:0}
 .contact small{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
 .contact b{display:block;font-family:var(--serif);font-size:22px;font-weight:600;margin-top:6px}
+.contact .email b{font-size:clamp(14px,1.55vw,18px);line-height:1.3;overflow-wrap:anywhere}
 footer{border-top:1px solid var(--line);padding:34px 0;text-align:center;color:var(--muted);font-size:13px}
 footer .mark{width:64px;height:64px;margin-bottom:12px}
 .admin-link{display:inline-flex;align-items:center;gap:6px;margin-top:14px;color:var(--muted);text-decoration:none;font-size:12px;letter-spacing:.08em;text-transform:uppercase;border:1px solid var(--line);border-radius:999px;padding:6px 12px}
@@ -346,7 +348,7 @@ form.co input:focus,form.co select:focus,form.co textarea:focus{outline:none;bor
     <div class="sec-head"><h2>Visit or <em>message</em> us</h2></div>
     <div class="contact">
       <a href="https://wa.me/971563267346" target="_blank" rel="noopener"><small>WhatsApp / Call</small><b>056 326 7346</b></a>
-      <a href="mailto:info.febyskitchen@gmail.com"><small>Email</small><b>info.febyskitchen@gmail.com</b></a>
+      <a class="email" href="mailto:info.febyskitchen@gmail.com"><small>Email</small><b>info.febyskitchen@gmail.com</b></a>
       <a href="https://maps.google.com/?q=Al+Rigga+Corniche+Deira+Dubai" target="_blank" rel="noopener"><small>Find us</small><b>Al Rigga, Corniche Deira</b></a>
       <a href="https://www.facebook.com/febyskitchenuae" target="_blank" rel="noopener"><small>Facebook</small><b>Febys Kitchen UAE</b></a>
     </div>
