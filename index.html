@@ -173,16 +173,6 @@ section{padding:64px 0}
 .contact a,.contact div{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:24px;text-decoration:none;display:block}
 .contact small{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
 .contact b{display:block;font-family:var(--serif);font-size:22px;font-weight:600;margin-top:6px}
-.reviews-panel{max-width:760px;margin:0 auto;padding:34px 24px;text-align:center;background:#fff;border:1px solid var(--line);border-radius:var(--radius)}
-.reviews-panel p{color:var(--muted);margin-bottom:20px}
-.review-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-bottom:22px;text-align:left}
-.review-card{padding:18px;border:1px solid var(--line);border-radius:12px;background:var(--paper)}
-.review-card-head{display:flex;justify-content:space-between;gap:12px;align-items:start}
-.review-card b{font-weight:600}
-.review-card time,.review-verdict{font-size:12px;color:var(--muted)}
-.review-verdict{display:block;margin-top:4px;color:var(--leaf-2)}
-.review-card p{margin:14px 0 0;white-space:pre-wrap;color:var(--ink-2)}
-.review-status{color:var(--muted);font-size:14px;text-align:center}
 footer{border-top:1px solid var(--line);padding:34px 0;text-align:center;color:var(--muted);font-size:13px}
 footer .mark{width:64px;height:64px;margin-bottom:12px}
 .admin-link{display:inline-flex;align-items:center;gap:6px;margin-top:14px;color:var(--muted);text-decoration:none;font-size:12px;letter-spacing:.08em;text-transform:uppercase;border:1px solid var(--line);border-radius:999px;padding:6px 12px}
@@ -347,17 +337,6 @@ form.co input:focus,form.co select:focus,form.co textarea:focus{outline:none;bor
       <div><h4>Party Packages</h4><p>Ready-made spreads for 4 to 30 guests.</p></div>
       <div><h4>Lechon &amp; Cochinillo</h4><p>Whole roast pig by weight, lechon belly roll and lechon ulo.</p></div>
       <div><h4>Events</h4><p>Buffet catering with chafing dish setup for celebrations.</p></div>
-    </div>
-  </div>
-</section>
-
-<section id="reviews">
-  <div class="wrap">
-    <div class="sec-head"><h2>Kind words from our <em>guests</em></h2></div>
-    <div class="reviews-panel">
-      <div class="review-list" id="facebookReviews" aria-live="polite"><p class="review-status">Loading Facebook reviews…</p></div>
-      <p class="review-status" id="reviewsStatus"></p>
-      <a class="btn btn-dark" href="https://www.facebook.com/febyskitchenuae/reviews/?id=100063511842390&amp;sk=reviews" target="_blank" rel="noopener">Read our Facebook reviews</a>
     </div>
   </div>
 </section>
@@ -696,43 +675,6 @@ buildParade();
 
 $("#yr").textContent = new Date().getFullYear();
 renderMenu(); updateCount();
-loadFacebookReviews();
-
-function loadFacebookReviews(){
-  fetch("/api/reviews")
-    .then(response=>{
-      if(!response.ok) throw new Error(`Review service returned ${response.status}`);
-      return response.json();
-    })
-    .then(({reviews})=>{
-      const list=$("#facebookReviews");
-      const status=$("#reviewsStatus");
-      if(!Array.isArray(reviews)||!reviews.length){
-        list.innerHTML="";
-        status.textContent="No Facebook reviews are available to display right now.";
-        return;
-      }
-      list.innerHTML=reviews.map(review=>{
-        const verdict=review.recommendation==="positive"?"Recommends Febys"
-          :review.recommendation==="negative"?"Does not recommend"
-          :Number.isFinite(review.rating)?`${review.rating} out of 5`:"";
-        const date=review.createdAt?new Date(review.createdAt):null;
-        const dateLabel=date&&!Number.isNaN(date.getTime())
-          ? date.toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}) : "";
-        return `<article class="review-card">
-          <div class="review-card-head"><div><b>${esc(review.reviewer||"Facebook user")}</b>${verdict?`<span class="review-verdict">${esc(verdict)}</span>`:""}</div>
-          ${dateLabel?`<time datetime="${esc(review.createdAt)}">${esc(dateLabel)}</time>`:""}</div>
-          ${review.text?`<p>${esc(review.text)}</p>`:""}
-        </article>`;
-      }).join("");
-      status.textContent="";
-    })
-    .catch(error=>{
-      console.warn("Facebook reviews unavailable.",error);
-      $("#facebookReviews").innerHTML="";
-      $("#reviewsStatus").textContent="Facebook reviews could not be loaded right now. Visit our Facebook page to read them.";
-    });
-}
 
 /* ---------- live menu from the admin ---------- */
 async function loadLiveMenu(){
