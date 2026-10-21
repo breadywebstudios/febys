@@ -707,17 +707,34 @@ async function renderAdmins(){
       <h3 style="padding:8px 0 0">Add an admin</h3>
       <div class="two">
         <label class="f">Name<input type="text" id="aName" placeholder="e.g. Feby"></label>
-        <label class="f">Email<input type="email" id="aEmail" placeholder="name@example.com"></label>
+        <label class="f">Email<input type="email" id="aEmail" placeholder="name@example.com" autocomplete="off"></label>
       </div>
+      <label class="f">Password <small>At least 6 characters. Share it with them — they sign in right away.</small>
+        <input type="text" id="aPass" minlength="6" autocomplete="new-password" placeholder="Choose a password for them"></label>
       <div><button class="btn" id="aAdd">Add admin</button></div>
-      <div class="msg ok">After you add them, they open this page and click <b>“First time? Create password”</b> using that same email.</div>
+      <div id="aMsg"></div>
     </div>`;
   $("#aAdd").onclick = async () => {
-    const email = $("#aEmail").value.trim().toLowerCase();
+    const btn = $("#aAdd"), msg = t => $("#aMsg").innerHTML = `<div class="msg ok">${t}</div>`;
+    const email = $("#aEmail").value.trim().toLowerCase(), password = $("#aPass").value, name = $("#aName").value.trim() || null;
     if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return toast("Enter a valid email", true);
-    const { error } = await sb.from("admins").insert({ email, name:$("#aName").value.trim() || null });
-    if(error) return fail(error.code==="23505" ? {message:"That email is already an admin"} : error);
-    toast("Admin added"); renderAdmins();
+    if(password.length < 6) return toast("Password needs at least 6 characters", true);
+    btn.disabled = true; btn.textContent = "Adding…";
+    try{
+      // 1) put them on the admin list (fine if they're already on it)
+      const { error } = await sb.from("admins").insert({ email, name });
+      if(error && error.code !== "23505") throw error;
+      // 2) create their login with a separate client, so you stay signed in
+      const tmp = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth:{ persistSession:false, autoRefreshToken:false, storageKey:"febys-tmp" } });
+      const { data, error: e2 } = await tmp.auth.signUp({ email, password, options:{ data:{ app:"febys", name } } });
+      if(e2 && !/already registered/i.test(e2.message)) throw e2;
+      const existed = !!e2 || (data?.user && data.user.identities?.length === 0);
+      msg(existed
+        ? `<b>${esc(email)}</b> is an admin. They already had a login, so they use their existing password.`
+        : `<b>${esc(email)}</b> can sign in now with the password you set.`);
+      toast("Admin added"); setTimeout(renderAdmins, 2500);
+    }catch(err){ fail(err, "Couldn't add admin"); }
+    btn.disabled = false; btn.textContent = "Add admin";
   };
   $("#tab-admins").querySelectorAll("[data-rm]").forEach(b=>b.onclick=()=>confirmBox(`Remove ${b.dataset.rm}?`, "They won't be able to change the menu any more.", "Remove", async ()=>{
     const { error } = await sb.from("admins").delete().eq("email", b.dataset.rm);
