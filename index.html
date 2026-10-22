@@ -83,6 +83,26 @@ header{position:sticky;top:0;z-index:40;background:rgba(251,249,244,.92);backdro
 .hero-art .t1{left:-4%;bottom:14%}
 .hero-art .t2{right:-2%;top:12%}
 
+.hidden{display:none!important}
+/* ---------- Reviews carousel ---------- */
+.reviews{padding:56px 0 64px;background:linear-gradient(var(--paper),#f2eee4 50%,var(--paper));overflow:hidden}
+.rv-lane{overflow:hidden;padding:10px 0 18px;-webkit-mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent);mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent)}
+.rv-track{display:flex;gap:18px;width:max-content;animation:parade 70s linear infinite}
+.rv-lane:hover .rv-track,.rv-lane:focus-within .rv-track{animation-play-state:paused}
+.rv-card{flex:0 0 auto;width:300px;background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:0 12px 28px rgba(20,20,20,.07);display:flex;flex-direction:column}
+.rv-photo{position:relative;aspect-ratio:4/3;background:var(--line);overflow:hidden}
+.rv-photo img{width:100%;height:100%;object-fit:cover;transition:transform .6s ease}
+.rv-card:hover .rv-photo img{transform:scale(1.05)}
+.rv-tag{position:absolute;top:10px;left:10px;background:rgba(255,255,255,.92);color:var(--ink-2);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;padding:4px 9px;border-radius:999px;border:1px dashed #b8b2a5}
+.rv-body{padding:14px 16px 16px;display:flex;flex-direction:column;gap:8px;flex:1}
+.rv-stars{color:#c9973b;letter-spacing:2px;font-size:14px}
+.rv-text{font-size:14.5px;line-height:1.5;color:var(--ink-2);flex:1}
+.rv-who{font-size:12.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:9px}
+.rv-who b{color:var(--leaf);font-weight:500}
+.rv-note{text-align:center;font-size:12px;color:var(--muted);margin-top:4px}
+@media (max-width:860px){.rv-card{width:250px}.rv-track{animation-duration:55s}}
+@media (prefers-reduced-motion:reduce){.rv-track{animation:none}.rv-lane{overflow-x:auto}}
+
 /* ---------- Hero food parade (background) ---------- */
 .hero{background:var(--ink);color:#fff;min-height:640px;display:flex;align-items:center;padding:96px 0 88px}
 .hero > .wrap{position:relative;z-index:2;width:100%}
@@ -337,6 +357,15 @@ form.co input:focus,form.co select:focus,form.co textarea:focus{outline:none;bor
     <div id="menuRoot"></div>
     <p class="fine" id="footnote">Prices exclude delivery charges. Chafing dish rental is charged separately. Pricing is subject to change based on availability.</p>
   </div>
+</section>
+
+<section class="reviews hidden" id="reviews" aria-label="Customer reviews">
+  <div class="wrap sec-head">
+    <h2>What our <em>customers</em> say</h2>
+    <p>Fresh trays, happy tables.</p>
+  </div>
+  <div class="rv-lane"><div class="rv-track" id="rvTrack"></div></div>
+  <p class="rv-note hidden" id="rvNote">Sample reviews shown for preview.</p>
 </section>
 
 <section class="about" id="about">
@@ -715,6 +744,45 @@ async function loadLiveMenu(){
   }catch(e){ console.warn("Live menu unavailable, showing built-in menu.", e); }
 }
 loadLiveMenu();
+
+/* ---------- reviews carousel (managed in admin → Reviews) ---------- */
+const SAMPLE_REVIEWS = [
+  { dish:"Combo 1", body:"Sample review: the crispy pata stayed crunchy all the way to our place, and the fried chicken disappeared first. Perfect for a family Sunday.", photo:"Combo1/Combo1.jpg" },
+  { dish:"Combo 2", body:"Sample review: generous trays and the lechon roll was so tender. Everyone asked where we ordered from.", photo:"Combo2/Combo2.jpg" },
+  { dish:"Combo 3", body:"Sample review: the kare-kare and sisig tasted just like home. Delivery was on time for our office lunch.", photo:"Combo3/Combo3.jpg" },
+  { dish:"Lechon Belly Roll", body:"Sample review: crackling skin, juicy inside. We ordered a second roll for the next weekend.", photo:"Combo2/Lechon Roll.jpg" },
+  { dish:"Kare-Kare", body:"Sample review: rich peanut sauce and soft oxtail, with enough bagoong on the side. Lutong bahay talaga.", photo:"Combo3/HalfTray_Karekare.jpg" },
+  { dish:"Crispy Pata", body:"Sample review: crispy, not oily, and the dip was perfect. A hit at our birthday party.", photo:"Combo1/Crispy Pata.jpg" }
+].map(r => ({ ...r, reviewer:"Customer name", rating:5, is_sample:true }));
+
+function renderReviews(list){
+  if(!list.length){ $("#reviews").classList.add("hidden"); return; }
+  const src = u => /^https?:\/\//.test(u) ? u : encodeURI(u);
+  const card = r => `
+    <article class="rv-card">
+      ${r.photo ? `<div class="rv-photo"><img src="${esc(src(r.photo))}" alt="${esc(r.dish||"Febys dish")}" loading="lazy">${r.is_sample?`<span class="rv-tag">Sample review</span>`:""}</div>` : ""}
+      <div class="rv-body">
+        <div class="rv-stars" aria-label="${r.rating} out of 5">${"★".repeat(r.rating)}${"☆".repeat(5-r.rating)}</div>
+        <p class="rv-text">“${esc((t=>t.charAt(0).toUpperCase()+t.slice(1))(r.body.replace(/^Sample review:\s*/i,"")))}”</p>
+        <div class="rv-who">${esc(r.reviewer||"Customer")}${r.dish?` · <b>${esc(r.dish)}</b>`:""}${!r.photo && r.is_sample?` · Sample review`:""}</div>
+      </div>
+    </article>`;
+  // repeat short lists so the loop always fills wide screens, then double for a seamless loop
+  let row = list.slice(); while(row.length < 8) row = row.concat(list);
+  const html = row.map(card).join("");
+  $("#rvTrack").innerHTML = html + html;
+  $("#rvNote").classList.toggle("hidden", !list.some(r=>r.is_sample));
+  $("#reviews").classList.remove("hidden");
+}
+(async function loadReviews(){
+  try{
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/reviews?select=reviewer,dish,body,rating,photo_url,is_sample&active=eq.true&order=sort,id`,
+                          { headers:{ apikey:SUPABASE_KEY, "Accept-Profile":"febys" } });
+    if(!r.ok) throw new Error(r.status);
+    const rows = await r.json();
+    renderReviews(rows.map(x => ({ reviewer:x.reviewer, dish:x.dish, body:x.body, rating:Math.min(5,Math.max(1,x.rating|0)), photo:x.photo_url, is_sample:x.is_sample })));
+  }catch(e){ renderReviews(SAMPLE_REVIEWS); }
+})();
 </script>
 </body>
 </html>

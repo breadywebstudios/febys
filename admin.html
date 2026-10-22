@@ -104,6 +104,10 @@ main{max-width:1180px;margin:0 auto;padding:26px 20px 80px}
 .g3{background:linear-gradient(135deg,#141414,#3d3d3a)}.g4{background:linear-gradient(135deg,#8a6a3b,#c39a5a)}
 .row .nm{font-weight:500;font-size:16px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .row .meta{font-size:13px;color:var(--muted)}
+.rv-row .thumb{background:var(--line)}
+.rv-row .stars{color:#c9973b;letter-spacing:1px;font-size:13px}
+.rv-row .txt{font-size:13.5px;color:var(--ink-2);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.pill.sample{background:#fff7e6;border-color:#ecd7a8;color:#8a6a3b}
 .pill{font-size:11px;letter-spacing:.06em;border-radius:999px;padding:2px 8px;background:var(--paper);border:1px solid var(--line);color:var(--ink-2);font-weight:400}
 .pill.hid{background:var(--red-soft);border-color:#ecc9c5;color:var(--red)}
 .acts{display:flex;gap:6px;align-items:center}
@@ -284,6 +288,7 @@ main{max-width:1180px;margin:0 auto;padding:26px 20px 80px}
     <nav class="tabs">
       <button data-tab="orders" class="on">Orders <span class="nbadge hidden" id="newBadge">0</span></button>
       <button data-tab="menu">Menu</button>
+      <button data-tab="reviews">Reviews</button>
       <button data-tab="settings">Banner &amp; settings</button>
       <button data-tab="admins">Admins</button>
     </nav>
@@ -291,6 +296,7 @@ main{max-width:1180px;margin:0 auto;padding:26px 20px 80px}
   <main>
     <div id="tab-orders"></div>
     <div id="tab-menu" class="hidden"></div>
+    <div id="tab-reviews" class="hidden"></div>
     <div id="tab-settings" class="hidden"></div>
     <div id="tab-admins" class="hidden"></div>
   </main>
@@ -445,7 +451,8 @@ document.querySelectorAll("nav.tabs button").forEach(b => b.onclick = () => {
   renderTab();
 });
 function renderTab(){
-  ["orders","menu","settings","admins"].forEach(t => $("#tab-"+t).classList.toggle("hidden", t!==S.tab));
+  ["orders","menu","reviews","settings","admins"].forEach(t => $("#tab-"+t).classList.toggle("hidden", t!==S.tab));
+  if(S.tab==="reviews") renderReviewsTab();
   if(S.tab==="orders") renderOrders();
   if(S.tab==="menu") renderMenu();
   if(S.tab==="settings") renderSettings();
@@ -741,6 +748,115 @@ function removePhotoFile(url){
   const marker = `/object/public/${BUCKET}/`;
   const ix = url.indexOf(marker); if(ix<0) return;
   sb.storage.from(BUCKET).remove([decodeURIComponent(url.slice(ix+marker.length))]).catch(()=>{});
+}
+
+/* ============================================================
+   REVIEWS TAB
+   ============================================================ */
+S.reviews = [];
+const imgSrc = u => !u ? "" : /^https?:\/\//.test(u) ? u : encodeURI(u);
+async function renderReviewsTab(){
+  $("#tab-reviews").innerHTML = `<div class="loading">Loading reviews…</div>`;
+  const { data, error } = await sb.from("reviews").select("*").order("sort").order("id");
+  if(error){ $("#tab-reviews").innerHTML = `<div class="empty">Couldn't load reviews. ${esc(error.message)}</div>`; return; }
+  S.reviews = data; drawReviews();
+}
+function drawReviews(){
+  const list = S.reviews, shown = list.filter(r=>r.active).length, samples = list.filter(r=>r.is_sample).length;
+  $("#tab-reviews").innerHTML = `
+    <div class="head">
+      <div><h2>Reviews</h2><p>${list.length} reviews · ${shown} showing in the website carousel${samples?` · ${samples} marked as samples`:""}. Only add real reviews with the customer's OK.</p></div>
+      <button class="btn" id="rvAdd">+ Add review</button>
+    </div>
+    <div class="items">
+      ${list.length ? list.map((r,ix)=>`
+        <div class="row rv-row ${r.active?"":"off"}">
+          <div class="thumb">${r.photo_url?`<img src="${esc(imgSrc(r.photo_url))}" alt="">`:""}</div>
+          <div>
+            <div class="nm">${esc(r.reviewer)}${r.dish?` <span class="pill">${esc(r.dish)}</span>`:""}${r.is_sample?` <span class="pill sample">Sample</span>`:""}${r.active?"":` <span class="pill hid">Hidden</span>`}</div>
+            <div class="stars">${"★".repeat(r.rating)}${"☆".repeat(5-r.rating)}</div>
+            <div class="txt">${esc(r.body)}</div>
+          </div>
+          <div class="acts">
+            <label class="switch" title="${r.active?"Showing on site":"Hidden from site"}"><input type="checkbox" data-rvtoggle="${r.id}" ${r.active?"checked":""}><span></span></label>
+            <button class="icon" title="Move up" data-rvmove="${r.id}" data-dir="-1" ${ix===0?"disabled":""}>${ICON.up}</button>
+            <button class="icon" title="Move down" data-rvmove="${r.id}" data-dir="1" ${ix===list.length-1?"disabled":""}>${ICON.down}</button>
+            <button class="icon" title="Edit" data-rvedit="${r.id}">${ICON.edit}</button>
+            <button class="icon" title="Delete" data-rvdel="${r.id}">${ICON.del}</button>
+          </div>
+        </div>`).join("") : `<div class="empty">No reviews yet. The carousel stays hidden on the website until you add one.</div>`}
+    </div>`;
+  const t = $("#tab-reviews");
+  $("#rvAdd").onclick = () => editReview(null);
+  t.querySelectorAll("[data-rvedit]").forEach(b=>b.onclick=()=>editReview(S.reviews.find(r=>r.id===+b.dataset.rvedit)));
+  t.querySelectorAll("[data-rvtoggle]").forEach(c=>c.onchange=async()=>{
+    const id=+c.dataset.rvtoggle; const { error } = await sb.from("reviews").update({ active:c.checked }).eq("id", id);
+    if(error){ fail(error,"Couldn't update"); return drawReviews(); }
+    S.reviews.find(r=>r.id===id).active=c.checked; drawReviews(); toast(c.checked?"Showing on the site":"Hidden from the site");
+  });
+  t.querySelectorAll("[data-rvmove]").forEach(b=>b.onclick=async()=>{
+    const list=[...S.reviews], i=list.findIndex(r=>r.id===+b.dataset.rvmove), j=i+(+b.dataset.dir);
+    if(j<0||j>=list.length) return; [list[i],list[j]]=[list[j],list[i]];
+    try{ await persistOrder("reviews", list); S.reviews=list; drawReviews(); }catch(e){ fail(e,"Couldn't reorder"); renderReviewsTab(); }
+  });
+  t.querySelectorAll("[data-rvdel]").forEach(b=>b.onclick=()=>{
+    const r=S.reviews.find(x=>x.id===+b.dataset.rvdel);
+    confirmBox("Delete this review?", "It will be removed from the website for good. To take it off for now, use the switch to hide it.", "Delete review", async()=>{
+      const { error } = await sb.from("reviews").delete().eq("id", r.id);
+      if(error) return fail(error,"Couldn't delete");
+      if(r.photo_url) removePhotoFile(r.photo_url);
+      S.reviews=S.reviews.filter(x=>x.id!==r.id); drawReviews(); toast("Review deleted");
+    });
+  });
+}
+function editReview(r){
+  const isNew=!r; const d = r ? {...r} : { reviewer:"", dish:"", body:"", rating:5, photo_url:null, is_sample:false, active:true };
+  let photoFile=null, removePhoto=false;
+  const dishes=[...new Set(S.items.map(i=>i.name))];
+  modal(`
+    <div class="mh"><h3>${isNew?"Add review":"Edit review"}</h3><button class="x" data-close>×</button></div>
+    <div class="mb">
+      <div class="two">
+        <label class="f">Customer name <small>As they agreed to be shown, e.g. “Maria S.”</small><input type="text" id="rName" maxlength="80" value="${esc(d.reviewer)}"></label>
+        <label class="f">Dish ordered<input type="text" id="rDish" maxlength="120" list="rDishes" value="${esc(d.dish||"")}"><datalist id="rDishes">${dishes.map(n=>`<option value="${esc(n)}">`).join("")}</datalist></label>
+      </div>
+      <label class="f">Review<textarea id="rBody" rows="4" maxlength="600">${esc(d.body)}</textarea></label>
+      <label class="f">Rating<select id="rRating">${[5,4,3,2,1].map(n=>`<option value="${n}" ${n===d.rating?"selected":""}>${"★".repeat(n)} ${n}</option>`).join("")}</select></label>
+      <div class="f" style="display:grid;gap:8px;font-size:13px;font-weight:500;color:var(--ink-2)">Photo of the dish
+        <div class="photo">
+          <div class="pv g1" id="rPv"></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <label class="btn ghost sm" style="cursor:pointer">Upload photo<input type="file" id="rFile" accept="image/jpeg,image/png,image/webp" hidden></label>
+            <button type="button" class="btn ghost sm" id="rNoPhoto">Remove photo</button>
+          </div>
+        </div>
+      </div>
+      <label class="check"><input type="checkbox" id="rSample" ${d.is_sample?"checked":""}> Mark as <b>sample review</b> (shows a “Sample review” tag on the website)</label>
+      <label class="check"><span class="switch"><input type="checkbox" id="rActive" ${d.active?"checked":""}><span></span></span> Show in the website carousel</label>
+    </div>
+    <div class="mf"><div class="grow"></div><button class="btn ghost" data-close>Cancel</button><button class="btn" id="rSave">${isNew?"Add review":"Save changes"}</button></div>`);
+  const paint=()=>{ const src = photoFile ? URL.createObjectURL(photoFile) : (!removePhoto && imgSrc(d.photo_url));
+    $("#rPv").innerHTML = src ? `<img src="${esc(src)}" alt="">` : "No photo"; $("#rNoPhoto").classList.toggle("hidden", !src); };
+  $("#rFile").onchange=e=>{ const f=e.target.files[0]; if(!f) return; if(f.size>15*1024*1024) return toast("That photo is too large (max 15 MB)", true); photoFile=f; removePhoto=false; paint(); };
+  $("#rNoPhoto").onclick=()=>{ photoFile=null; removePhoto=true; $("#rFile").value=""; paint(); };
+  paint();
+  $("#rSave").onclick=async()=>{
+    const body=$("#rBody").value.trim(); if(!body) return toast("Write the review text", true);
+    const row={ reviewer:$("#rName").value.trim()||"Customer", dish:$("#rDish").value.trim()||null, body, rating:+$("#rRating").value,
+                is_sample:$("#rSample").checked, active:$("#rActive").checked };
+    const btn=$("#rSave"); btn.disabled=true; btn.textContent="Saving…";
+    try{
+      const old=d.photo_url;
+      if(photoFile) row.photo_url = await uploadPhoto(photoFile); else if(removePhoto) row.photo_url=null;
+      let res;
+      if(isNew){ row.sort = S.reviews.length ? Math.max(...S.reviews.map(x=>x.sort))+1 : 0; res = await sb.from("reviews").insert(row).select().single(); }
+      else res = await sb.from("reviews").update(row).eq("id", r.id).select().single();
+      if(res.error) throw res.error;
+      if(old && (photoFile||removePhoto) && old!==res.data.photo_url) removePhotoFile(old);
+      if(isNew) S.reviews.push(res.data); else Object.assign(S.reviews.find(x=>x.id===r.id), res.data);
+      closeModal(); drawReviews(); toast(isNew?"Review added":"Review saved");
+    }catch(e){ fail(e,"Couldn't save"); btn.disabled=false; btn.textContent=isNew?"Add review":"Save changes"; }
+  };
 }
 
 /* ============================================================
