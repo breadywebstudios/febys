@@ -108,6 +108,21 @@ main{max-width:1180px;margin:0 auto;padding:26px 20px 80px}
 .rv-row .stars{color:#c9973b;letter-spacing:1px;font-size:13px}
 .rv-row .txt{font-size:13.5px;color:var(--ink-2);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .pill.sample{background:#fff7e6;border-color:#ecd7a8;color:#8a6a3b}
+.gal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;align-items:start}
+.gal-card{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
+.gal-card.off{opacity:.55}
+.gal-card .ph{aspect-ratio:4/3;background:var(--line);position:relative;overflow:hidden;flex:0 0 auto}
+.gal-card .ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.gal-card .ph .num{position:absolute;top:8px;left:8px;background:rgba(255,255,255,.92);border-radius:999px;font-size:11px;padding:2px 8px;font-weight:600}
+.gal-card .bd{padding:10px;display:grid;gap:8px}
+.gal-card .bd input[type=text]{padding:7px 9px;font-size:13.5px}
+.gal-card .path{font-size:11px;color:var(--muted);word-break:break-all}
+.gal-card .ctl{display:flex;gap:6px;align-items:center}
+.gal-card .ctl .grow{flex:1}
+.gal-card .icon{width:30px;height:30px}
+.gal-avail .gal-card .ph{cursor:pointer}
+.gal-note{font-size:13px;color:var(--ink-2);background:var(--leaf-soft);border-radius:10px;padding:10px 12px;margin:6px 0 18px}
+.gal-sec{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:22px 0 10px}
 .pill{font-size:11px;letter-spacing:.06em;border-radius:999px;padding:2px 8px;background:var(--paper);border:1px solid var(--line);color:var(--ink-2);font-weight:400}
 .pill.hid{background:var(--red-soft);border-color:#ecc9c5;color:var(--red)}
 .acts{display:flex;gap:6px;align-items:center}
@@ -289,6 +304,7 @@ main{max-width:1180px;margin:0 auto;padding:26px 20px 80px}
       <button data-tab="orders" class="on">Orders <span class="nbadge hidden" id="newBadge">0</span></button>
       <button data-tab="menu">Menu</button>
       <button data-tab="reviews">Reviews</button>
+      <button data-tab="gallery">Gallery</button>
       <button data-tab="settings">Banner &amp; settings</button>
       <button data-tab="admins">Admins</button>
     </nav>
@@ -297,6 +313,7 @@ main{max-width:1180px;margin:0 auto;padding:26px 20px 80px}
     <div id="tab-orders"></div>
     <div id="tab-menu" class="hidden"></div>
     <div id="tab-reviews" class="hidden"></div>
+    <div id="tab-gallery" class="hidden"></div>
     <div id="tab-settings" class="hidden"></div>
     <div id="tab-admins" class="hidden"></div>
   </main>
@@ -451,7 +468,8 @@ document.querySelectorAll("nav.tabs button").forEach(b => b.onclick = () => {
   renderTab();
 });
 function renderTab(){
-  ["orders","menu","reviews","settings","admins"].forEach(t => $("#tab-"+t).classList.toggle("hidden", t!==S.tab));
+  ["orders","menu","reviews","gallery","settings","admins"].forEach(t => $("#tab-"+t).classList.toggle("hidden", t!==S.tab));
+  if(S.tab==="gallery") renderGalleryTab();
   if(S.tab==="reviews") renderReviewsTab();
   if(S.tab==="orders") renderOrders();
   if(S.tab==="menu") renderMenu();
@@ -857,6 +875,87 @@ function editReview(r){
       closeModal(); drawReviews(); toast(isNew?"Review added":"Review saved");
     }catch(e){ fail(e,"Couldn't save"); btn.disabled=false; btn.textContent=isNew?"Add review":"Save changes"; }
   };
+}
+
+/* ============================================================
+   GALLERY TAB — photos stay as files in the website folder;
+   this only stores which ones show, their order and captions.
+   ============================================================ */
+S.gallery = []; S.galleryFiles = [];
+const ICON_LEFT = '<svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>', ICON_RIGHT = '<svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>';
+const safePath = p => typeof p==="string" && p.length>0 && p.length<=300 && !/^[a-z]+:/i.test(p) && !p.includes("..") && /\.(jpe?g|png|webp)$/i.test(p);
+async function renderGalleryTab(){
+  $("#tab-gallery").innerHTML = `<div class="loading">Loading gallery…</div>`;
+  const [g, files] = await Promise.all([
+    sb.from("gallery").select("*").order("sort").order("id"),
+    fetch("images.json", { cache:"no-store" }).then(r=>r.ok?r.json():{images:[],failed:true}).catch(()=>({images:[],failed:true}))
+  ]);
+  if(g.error){ $("#tab-gallery").innerHTML = `<div class="empty">Couldn't load the gallery. ${esc(g.error.message)}</div>`; return; }
+  S.gallery = g.data; S.galleryFiles = (files.images||[]).filter(safePath); S.galleryListFailed = !!files.failed; drawGallery();
+}
+function drawGallery(){
+  const used = new Set(S.gallery.map(x=>x.path)), avail = S.galleryFiles.filter(p=>!used.has(p)), shown = S.gallery.filter(x=>x.active).length;
+  $("#tab-gallery").innerHTML = `
+    <div class="head"><div><h2>Gallery</h2><p>${shown} photo${shown===1?"":"s"} showing under “From our kitchen” on the website. The first photo is shown large.</p></div></div>
+    <div class="gal-note">Photos are files in your website folder, not uploaded here. To add new ones, put them in the <b>gallery</b> folder (BreadyStudios\\febys\\gallery). Once they're synced to the site they appear below under <b>Available photos</b>.</div>
+    <div class="gal-sec">On the website · ${S.gallery.length}</div>
+    ${S.gallery.length ? `<div class="gal-grid">${S.gallery.map((x,i)=>`
+      <div class="gal-card ${x.active?"":"off"}">
+        <div class="ph"><img src="${esc(encodeURI(x.path))}" alt="" loading="lazy"><span class="num">${i+1}</span></div>
+        <div class="bd">
+          <input type="text" maxlength="120" placeholder="Caption (optional)" value="${esc(x.caption||"")}" data-gcap="${x.id}">
+          <div class="path">${esc(x.path)}</div>
+          <div class="ctl">
+            <label class="switch" title="${x.active?"Showing":"Hidden"}"><input type="checkbox" data-gtog="${x.id}" ${x.active?"checked":""}><span></span></label>
+            <div class="grow"></div>
+            <button class="icon" title="Move earlier" data-gmove="${x.id}" data-dir="-1" ${i===0?"disabled":""}>${ICON_LEFT}</button>
+            <button class="icon" title="Move later" data-gmove="${x.id}" data-dir="1" ${i===S.gallery.length-1?"disabled":""}>${ICON_RIGHT}</button>
+            <button class="icon" title="Remove from gallery (file is kept)" data-gdel="${x.id}">${ICON.del}</button>
+          </div>
+        </div>
+      </div>`).join("")}</div>` : `<div class="empty">No photos in the gallery yet. Add some from Available photos below.</div>`}
+    <div class="gal-sec">Available photos · ${avail.length}</div>
+    ${avail.length ? `<div class="gal-grid gal-avail">${avail.map(p=>`
+      <div class="gal-card">
+        <div class="ph" data-gadd="${esc(p)}" title="Add to gallery"><img src="${esc(encodeURI(p))}" alt="" loading="lazy"></div>
+        <div class="bd"><div class="path">${esc(p)}</div><button class="btn ghost sm" data-gadd="${esc(p)}">+ Add to gallery</button></div>
+      </div>`).join("")}</div>` : `<div class="empty">${S.galleryListFailed ? "The photo list can only be read on the live site (febys.vercel.app/admin.html). You can still add a photo by its path below." : "Every photo in your folder is already in the gallery."}</div>`}
+    <div class="gal-sec">Add by file path</div>
+    <div style="display:flex;gap:8px;max-width:560px"><input type="text" id="gPath" placeholder="e.g. gallery/birthday-party.jpg"><button class="btn" id="gPathAdd">Add</button></div>`;
+  const t = $("#tab-gallery");
+  t.querySelectorAll("[data-gcap]").forEach(inp=>inp.onchange=async()=>{
+    const id=+inp.dataset.gcap, caption=inp.value.trim()||null;
+    const { error } = await sb.from("gallery").update({ caption }).eq("id", id);
+    if(error) return fail(error,"Couldn't save caption");
+    S.gallery.find(x=>x.id===id).caption=caption; toast("Caption saved");
+  });
+  t.querySelectorAll("[data-gtog]").forEach(c=>c.onchange=async()=>{
+    const id=+c.dataset.gtog; const { error } = await sb.from("gallery").update({ active:c.checked }).eq("id", id);
+    if(error){ fail(error,"Couldn't update"); return drawGallery(); }
+    S.gallery.find(x=>x.id===id).active=c.checked; drawGallery(); toast(c.checked?"Showing on the website":"Hidden from the website");
+  });
+  t.querySelectorAll("[data-gmove]").forEach(b=>b.onclick=async()=>{
+    const list=[...S.gallery], i=list.findIndex(x=>x.id===+b.dataset.gmove), j=i+(+b.dataset.dir);
+    if(j<0||j>=list.length) return; [list[i],list[j]]=[list[j],list[i]];
+    try{ await persistOrder("gallery", list); S.gallery=list; drawGallery(); }catch(e){ fail(e,"Couldn't reorder"); renderGalleryTab(); }
+  });
+  t.querySelectorAll("[data-gdel]").forEach(b=>b.onclick=async()=>{
+    const id=+b.dataset.gdel; const { error } = await sb.from("gallery").delete().eq("id", id);
+    if(error) return fail(error,"Couldn't remove");
+    S.gallery=S.gallery.filter(x=>x.id!==id); drawGallery(); toast("Removed from gallery (the file is kept)");
+  });
+  const add = async p => {
+    p = String(p||"").trim().replace(/\\/g,"/").replace(/^\.?\//,"");
+    if(!safePath(p)) return toast("Use a photo path inside the website folder, e.g. gallery/photo.jpg", true);
+    if(S.gallery.some(x=>x.path===p)) return toast("That photo is already in the gallery", true);
+    const sort = S.gallery.length ? Math.max(...S.gallery.map(x=>x.sort))+1 : 0;
+    const caption = p.split("/").pop().replace(/\.[^.]+$/,"").replace(/[_-]+/g," ").trim();
+    const { data, error } = await sb.from("gallery").insert({ path:p, caption, sort }).select().single();
+    if(error) return fail(error,"Couldn't add");
+    S.gallery.push(data); drawGallery(); toast("Added to the gallery");
+  };
+  t.querySelectorAll("[data-gadd]").forEach(el=>el.onclick=()=>add(el.dataset.gadd));
+  $("#gPathAdd").onclick=()=>add($("#gPath").value);
 }
 
 /* ============================================================
