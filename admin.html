@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="only light">
+<meta name="theme-color" content="#fbf9f4">
 <meta name="robots" content="noindex">
 <title>Febys Admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -16,6 +18,12 @@
   --script:'Mrs Saint Delafield',cursive;--serif:'Cormorant Garamond',Georgia,serif;--sans:'Jost',system-ui,sans-serif;
 }
 *{box-sizing:border-box;margin:0;padding:0}
+/* keep the same light palette when the phone is in dark mode */
+:root{color-scheme:only light}
+html{background:#fbf9f4;color:#141414}
+input,select,textarea,button{color-scheme:light}
+input,select,textarea{background-color:#fff;color:#141414;-webkit-text-fill-color:#141414}
+input::placeholder,textarea::placeholder{color:#9a968c;-webkit-text-fill-color:#9a968c;opacity:1}
 body{font-family:var(--sans);background:var(--paper);color:var(--ink);line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh}
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}

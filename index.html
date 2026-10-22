@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="only light">
+<meta name="theme-color" content="#fbf9f4">
 <title>Febys · Filipino Food Trays & Catering</title>
 <meta name="description" content="Febys, Corniche Deira — Filipino food trays, holiday combos and party packages. Order on WhatsApp.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -26,6 +28,12 @@
   --radius:14px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
+/* keep the same light palette when the phone is in dark mode */
+:root{color-scheme:only light}
+html{background:#fbf9f4;color:#141414}
+input,select,textarea,button{color-scheme:light}
+input,select,textarea{background-color:#fff;color:#141414;-webkit-text-fill-color:#141414}
+input::placeholder,textarea::placeholder{color:#9a968c;-webkit-text-fill-color:#9a968c;opacity:1}
 html{scroll-behavior:smooth}
 body{font-family:var(--sans);background:var(--paper);color:var(--ink);font-weight:400;line-height:1.55;-webkit-font-smoothing:antialiased}
 img{max-width:100%;display:block}
