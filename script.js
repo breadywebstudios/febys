@@ -361,17 +361,33 @@ const GALLERY_FALLBACK = [
   ["Combo1/Crispy Pata.jpg","Crispy Pata"],["cp/milk-tea.jpg","Milk tea"],["Combo3/Sisig.jpg","Sisig"]
 ].map(([path,caption])=>({path,caption}));
 let galleryList = [], lbIndex = 0;
+const GALLERY_CATEGORIES = [
+  {id:"food", label:"Food", grid:"#gGridFood"},
+  {id:"events", label:"Events", grid:"#gGridEvents"},
+  {id:"catering", label:"Catering", grid:"#gGridCatering"}
+];
+function galleryCategory(g){
+  if(GALLERY_CATEGORIES.some(category => category.id === g.category)) return g.category;
+  const details = `${g.caption||""} ${g.path||""}`.toLowerCase();
+  if(/\b(catering|buffet|chafing|tray|combo|package|corporate|grazing)\b/.test(details)) return "catering";
+  if(/\b(event|wedding|birthday|celebration|party|function)\b/.test(details)) return "events";
+  return "food";
+}
 function renderGallery(list){
   galleryList = list.filter(g => g.path && !/^[a-z]+:/i.test(g.path) && !g.path.includes(".."));
   if(!galleryList.length){ $("#gallery").classList.add("hidden"); return; }
-  const MAX = 12, extra = galleryList.length - MAX;
-  $("#gGrid").innerHTML = galleryList.slice(0, MAX).map((g,i)=>`
-    <button class="g-item" data-g="${i}" aria-label="View ${esc(g.caption||"photo")}">
-      <img src="${esc(encodeURI(g.path))}" alt="${esc(g.caption||"Febys food")}" loading="lazy">
-      ${extra>0 && i===MAX-1 ? `<span class="g-more">+${extra}</span>` : (g.caption?`<figcaption>${esc(g.caption)}</figcaption>`:"")}
-    </button>`).join("");
+  const MAX = 6;
+  GALLERY_CATEGORIES.forEach(category => {
+    const photos = galleryList.map((photo,index)=>({photo,index})).filter(({photo}) => galleryCategory(photo) === category.id);
+    const extra = photos.length - MAX;
+    $(category.grid).innerHTML = photos.length ? photos.slice(0,MAX).map(({photo,index},i)=>`
+      <button class="g-item" data-g="${index}" aria-label="View ${esc(photo.caption||"photo")}">
+        <img src="${esc(encodeURI(photo.path))}" alt="${esc(photo.caption||"Febys food")}" loading="lazy">
+        ${extra>0 && i===MAX-1 ? `<span class="g-more">+${extra}</span>` : (photo.caption?`<figcaption>${esc(photo.caption)}</figcaption>`:"")}
+      </button>`).join("") : `<p class="g-empty">More ${category.label.toLowerCase()} photos coming soon.</p>`;
+  });
   $("#gallery").classList.remove("hidden");
-  const items = document.querySelectorAll(".g-item");
+  const items = $("#gallery").querySelectorAll(".g-item");
   if("IntersectionObserver" in window){
     const io = new IntersectionObserver(es => es.forEach((e,k) => { if(e.isIntersecting){ setTimeout(()=>e.target.classList.add("in"), (k%4)*90); io.unobserve(e.target); } }), { rootMargin:"0px 0px -40px 0px" });
     items.forEach(el => io.observe(el));
