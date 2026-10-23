@@ -97,6 +97,7 @@ header{position:sticky;top:0;z-index:50;background:rgba(251,248,244,.95);backdro
 .hero-logo{width:150px;height:auto;margin-bottom:6px}
 .hero .rule{background:var(--cream);width:170px}
 .hero h1{font-family:var(--display);font-weight:400;text-transform:uppercase;letter-spacing:.05em;line-height:1.08;font-size:clamp(42px,7.4vw,104px)}
+.hero-title-sub{display:block;font-size:.34em;letter-spacing:.2em;line-height:1.4}
 .tagline{font-size:clamp(20px,2.2vw,28px)}
 .hero-sub{max-width:560px;margin-top:14px;font-size:17px;color:rgba(246,239,232,.86)}
 .hero-cta{display:flex;flex-wrap:wrap;gap:14px;margin-top:34px}
