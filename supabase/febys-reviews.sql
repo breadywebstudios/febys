@@ -26,9 +26,9 @@ create policy "admins update reviews" on febys.reviews for update to authenticat
 create policy "admins delete reviews" on febys.reviews for delete to authenticated using ((select febys.is_admin()));
 
 insert into febys.reviews (reviewer, dish, body, rating, photo_url, is_sample, sort) values
- ('Customer name', 'Combo 1', 'Sample review: the crispy pata stayed crunchy all the way to our place, and the fried chicken disappeared first. Perfect for a family Sunday.', 5, 'Combo1/Combo1.jpg', true, 1),
- ('Customer name', 'Combo 2', 'Sample review: generous trays and the lechon roll was so tender. Everyone asked where we ordered from.', 5, 'Combo2/Combo2.jpg', true, 2),
- ('Customer name', 'Combo 3', 'Sample review: the kare-kare and sisig tasted just like home. Delivery was on time for our office lunch.', 5, 'Combo3/Combo3.jpg', true, 3),
- ('Customer name', 'Lechon Belly Roll', 'Sample review: crackling skin, juicy inside. We ordered a second roll for the next weekend.', 5, 'Combo2/Lechon Roll.jpg', true, 4),
- ('Customer name', 'Kare-Kare', 'Sample review: rich peanut sauce and soft oxtail, with enough bagoong on the side. Lutong bahay talaga.', 5, 'Combo3/HalfTray_Karekare.jpg', true, 5),
- ('Customer name', 'Crispy Pata', 'Sample review: crispy, not oily, and the dip was perfect. A hit at our birthday party.', 5, 'Combo1/Crispy Pata.jpg', true, 6);
+ ('Customer name', 'Combo 1', 'Sample review: the crispy pata stayed crunchy all the way to our place, and the fried chicken disappeared first. Perfect for a family Sunday.', 5, 'media/Combo1.jpg', true, 1),
+ ('Customer name', 'Combo 2', 'Sample review: generous trays and the lechon roll was so tender. Everyone asked where we ordered from.', 5, 'media/Combo2.jpg', true, 2),
+ ('Customer name', 'Combo 3', 'Sample review: the kare-kare and sisig tasted just like home. Delivery was on time for our office lunch.', 5, 'media/Combo3.jpg', true, 3),
+ ('Customer name', 'Lechon Belly Roll', 'Sample review: crackling skin, juicy inside. We ordered a second roll for the next weekend.', 5, 'media/Lechon Roll.jpg', true, 4),
+ ('Customer name', 'Kare-Kare', 'Sample review: rich peanut sauce and soft oxtail, with enough bagoong on the side. Lutong bahay talaga.', 5, 'media/HalfTray_Karekare.jpg', true, 5),
+ ('Customer name', 'Crispy Pata', 'Sample review: crispy, not oily, and the dip was perfect. A hit at our birthday party.', 5, 'media/Crispy Pata.jpg', true, 6);

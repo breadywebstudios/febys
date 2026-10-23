@@ -107,7 +107,7 @@ $("#openCart").onclick = openCart; $("#closeCart").onclick = closeCart; $("#over
 function renderCart(){
   $("#dTitle").textContent = "Your order";
   if(!cart.length){
-    $("#dBody").innerHTML = `<div class="empty"><img class="mark" src="logo.jpg" alt=""><p>Your order is empty.<br>Add something delicious from the menu.</p></div>`;
+    $("#dBody").innerHTML = `<div class="empty"><img class="mark" src="media/logo.jpg" alt=""><p>Your order is empty.<br>Add something delicious from the menu.</p></div>`;
     $("#dFoot").innerHTML = `<button class="btn btn-dark full" id="browseMenu">Browse the menu</button>`;
     $("#browseMenu").onclick = () => { closeCart(); document.getElementById("order").scrollIntoView({behavior:"smooth"}); };
     return;
@@ -355,10 +355,10 @@ function renderReviews(list){
 })();
 /* ---------- photo gallery (choose photos in admin → Gallery) ---------- */
 const GALLERY_FALLBACK = [
-  ["cp/grazing.jpg","Event grazing table"],["Combo1/Combo1.jpg","Holiday Combo 1"],["cp/halo-halo.jpg","Halo-Halo"],
-  ["Combo2/Lechon Roll.jpg","Lechon Belly Roll"],["cp/yema-cake.jpg","Yema Cheezycake"],["cp/chafing.jpg","Buffet catering"],
-  ["Combo3/HalfTray_Karekare.jpg","Kare-Kare"],["cp/lasagna.jpg","Lasagna"],["cp/cheese-bread.jpg","Cheese garlic bread"],
-  ["Combo1/Crispy Pata.jpg","Crispy Pata"],["cp/milk-tea.jpg","Milk tea"],["Combo3/Sisig.jpg","Sisig"]
+  ["media/grazing.jpg","Event grazing table"],["media/Combo1.jpg","Holiday Combo 1"],["media/halo-halo.jpg","Halo-Halo"],
+  ["media/Lechon Roll.jpg","Lechon Belly Roll"],["media/yema-cake.jpg","Yema Cheezycake"],["media/chafing.jpg","Buffet catering"],
+  ["media/HalfTray_Karekare.jpg","Kare-Kare"],["media/lasagna.jpg","Lasagna"],["media/cheese-bread.jpg","Cheese garlic bread"],
+  ["media/Crispy Pata.jpg","Crispy Pata"],["media/milk-tea.jpg","Milk tea"],["media/Sisig.jpg","Sisig"]
 ].map(([path,caption])=>({path,caption}));
 let galleryList = [], lbIndex = 0;
 const GALLERY_CATEGORIES = [

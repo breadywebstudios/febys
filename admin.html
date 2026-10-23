@@ -878,7 +878,7 @@ function editReview(r){
 }
 
 /* ============================================================
-   GALLERY TAB — photos stay as files in the website folder;
+   GALLERY TAB — photos stay as files in the media folder;
    this only stores which ones show, their order and captions.
    ============================================================ */
 S.gallery = []; S.galleryFiles = [];
@@ -897,7 +897,7 @@ function drawGallery(){
   const used = new Set(S.gallery.map(x=>x.path)), avail = S.galleryFiles.filter(p=>!used.has(p)), shown = S.gallery.filter(x=>x.active).length;
   $("#tab-gallery").innerHTML = `
     <div class="head"><div><h2>Gallery</h2><p>${shown} photo${shown===1?"":"s"} showing under “From our kitchen” on the website. The first photo is shown large.</p></div></div>
-    <div class="gal-note">Photos are files in your website folder, not uploaded here. To add new ones, put them in the <b>gallery</b> folder (BreadyStudios\\febys\\gallery). Once they're synced to the site they appear below under <b>Available photos</b>.</div>
+    <div class="gal-note">Photos are files in your website folder, not uploaded here. To add new ones, put them in the <b>media</b> folder (BreadyStudios\\febys\\media). Once they're synced to the site they appear below under <b>Available photos</b>.</div>
     <div class="gal-sec">On the website · ${S.gallery.length}</div>
     ${S.gallery.length ? `<div class="gal-grid">${S.gallery.map((x,i)=>`
       <div class="gal-card ${x.active?"":"off"}">
@@ -921,7 +921,7 @@ function drawGallery(){
         <div class="bd"><div class="path">${esc(p)}</div><button class="btn ghost sm" data-gadd="${esc(p)}">+ Add to gallery</button></div>
       </div>`).join("")}</div>` : `<div class="empty">${S.galleryListFailed ? "The photo list can only be read on the live site (febys.vercel.app/admin.html). You can still add a photo by its path below." : "Every photo in your folder is already in the gallery."}</div>`}
     <div class="gal-sec">Add by file path</div>
-    <div style="display:flex;gap:8px;max-width:560px"><input type="text" id="gPath" placeholder="e.g. gallery/birthday-party.jpg"><button class="btn" id="gPathAdd">Add</button></div>`;
+    <div style="display:flex;gap:8px;max-width:560px"><input type="text" id="gPath" placeholder="e.g. media/birthday-party.jpg"><button class="btn" id="gPathAdd">Add</button></div>`;
   const t = $("#tab-gallery");
   t.querySelectorAll("[data-gcap]").forEach(inp=>inp.onchange=async()=>{
     const id=+inp.dataset.gcap, caption=inp.value.trim()||null;
@@ -946,7 +946,7 @@ function drawGallery(){
   });
   const add = async p => {
     p = String(p||"").trim().replace(/\\/g,"/").replace(/^\.?\//,"");
-    if(!safePath(p)) return toast("Use a photo path inside the website folder, e.g. gallery/photo.jpg", true);
+    if(!safePath(p)) return toast("Use a photo path inside the website folder, e.g. media/photo.jpg", true);
     if(S.gallery.some(x=>x.path===p)) return toast("That photo is already in the gallery", true);
     const sort = S.gallery.length ? Math.max(...S.gallery.map(x=>x.sort))+1 : 0;
     const caption = p.split("/").pop().replace(/\.[^.]+$/,"").replace(/[_-]+/g," ").trim();

@@ -22,15 +22,15 @@ create policy "admins update gallery" on febys.gallery for update to authenticat
 create policy "admins delete gallery" on febys.gallery for delete to authenticated using ((select febys.is_admin()));
 
 insert into febys.gallery (path, caption, sort) values
- ('Combo1/Combo1.jpg', 'Holiday Combo 1', 1),
- ('Combo2/Combo2.jpg', 'Holiday Combo 2', 2),
- ('Combo3/Combo3.jpg', 'Holiday Combo 3', 3),
- ('Combo1/Crispy Pata.jpg', 'Crispy Pata', 4),
- ('Combo2/Lechon Roll.jpg', 'Lechon Belly Roll', 5),
- ('Combo3/HalfTray_Karekare.jpg', 'Kare-Kare', 6),
- ('Combo1/Feby_FriedChicken.jpg', 'Feby''s Fried Chicken', 7),
- ('Combo3/Sisig.jpg', 'Sisig', 8),
- ('Combo1/Shanghai.jpg', 'Lumpia Shanghai', 9),
+ ('media/Combo1.jpg', 'Holiday Combo 1', 1),
+ ('media/Combo2.jpg', 'Holiday Combo 2', 2),
+ ('media/Combo3.jpg', 'Holiday Combo 3', 3),
+ ('media/Crispy Pata.jpg', 'Crispy Pata', 4),
+ ('media/Lechon Roll.jpg', 'Lechon Belly Roll', 5),
+ ('media/HalfTray_Karekare.jpg', 'Kare-Kare', 6),
+ ('media/Feby_FriedChicken.jpg', 'Feby''s Fried Chicken', 7),
+ ('media/Sisig.jpg', 'Sisig', 8),
+ ('media/Shanghai.jpg', 'Lumpia Shanghai', 9),
  ('photos/febys-07.jpg', 'Party trays', 10),
  ('photos/febys-13.jpg', 'Pork BBQ', 11),
  ('photos/febys-16.jpg', 'Fried chicken & crispy pork', 12)
