@@ -4,91 +4,213 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="only light">
-<meta name="theme-color" content="#fbf9f4">
-<title>Febys · Filipino Food Trays & Catering</title>
-<meta name="description" content="Febys, Corniche Deira — Filipino food trays, holiday combos and party packages. Order on WhatsApp.">
+<meta name="theme-color" content="#823a26">
+<title>Feby's Restaurant and Cafe · Filipino Catering, Party Trays &amp; Events</title>
+<meta name="description" content="Feby's Restaurant and Cafe, Dubai — Filipino cuisine since 2011. Corporate catering, party trays and events, cakes, pastries and drinks. Order online through WhatsApp.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Mrs+Saint+Delafield&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Italiana&family=Quattrocento:wght@400;700&family=Quattrocento+Sans:ital,wght@0,400;0,700;1,400&family=Pinyon+Script&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-<header>
+<header id="hdr">
   <div class="wrap nav">
-    <a class="brand" href="#top">
+    <a class="brand" href="#home" aria-label="Feby's — home">
       <img class="mark" src="logo.jpg" alt="">
-      <div><b>Febys</b><small>Corniche Deira · Dubai</small></div>
+      <div><b>Feby's</b><small>Restaurant &amp; Cafe</small></div>
     </a>
-    <nav class="nav-links">
-      <a href="#menu">Menu</a>
+    <nav class="nav-links" id="navLinks" aria-label="Main">
+      <a href="#home">Home</a>
+      <a href="#about">About</a>
+      <a href="#services">Services &amp; Menu</a>
       <a href="#gallery">Gallery</a>
-      <a href="#about">Catering</a>
+      <a href="#reviews">Reviews</a>
       <a href="#contact">Contact</a>
     </nav>
-    <button class="cart-btn" id="openCart" aria-label="Open order">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 7h12l-1 13H7L6 7Z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>
-      Order <span class="count" id="cartCount">0</span>
-    </button>
+    <div class="nav-end">
+      <button class="cart-btn" id="openCart" aria-label="Open your order">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 7h12l-1 13H7L6 7Z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>
+        <span class="lbl">Order</span> <span class="count" id="cartCount">0</span>
+      </button>
+      <button class="burger" id="burger" aria-label="Menu" aria-expanded="false"><span></span><span></span></button>
+    </div>
   </div>
 </header>
 
-<div class="notice" id="top">
+<div class="notice" id="notice">
   <div class="wrap"><b id="noticeTitle">Holiday Packages</b> <span id="noticeText">are back — available every day. Advance booking required.</span></div>
 </div>
 
-<section class="hero">
-  <div class="hero-bg" aria-hidden="true">
-    <div class="lane" id="lane1"><div class="track"></div></div>
-    <div class="lane reverse" id="lane2"><div class="track"></div></div>
-    <div class="lane slow" id="lane3"><div class="track"></div></div>
-    <div class="lane reverse slow" id="lane4"><div class="track"></div></div>
-    <div class="lane" id="lane5"><div class="track"></div></div>
-    <div class="lane reverse" id="lane6"><div class="track"></div></div>
-  </div>
-  <div class="hero-shade"></div>
-  <div class="wrap hero-grid">
-    <div>
-      <div class="eyebrow">Filipino Restaurant · Food Trays · Catering</div>
-      <h1>Food from my <em>home</em><br>to your hearts.</h1>
-      <p class="lead">Freshly cooked, home-style Filipino favourites — lechon, crispy pata, kare-kare and more — in trays made for the whole family and barkada.</p>
-      <div class="hero-cta">
-        <a class="btn btn-dark" href="#menu">Browse the menu</a>
-        <a class="btn btn-ghost" href="https://wa.me/971563267346" target="_blank" rel="noopener">WhatsApp us</a>
-      </div>
-      <div class="facts">
-        <div><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Always open</div>
-        <div><svg viewBox="0 0 24 24"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7z"/><circle cx="7" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/></svg>Delivery &amp; takeout</div>
-        <div><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/></svg>Card payments accepted</div>
-      </div>
+<!-- ============ HOME ============ -->
+<section class="hero" id="home">
+  <div class="hero-photo" aria-hidden="true"></div>
+  <div class="wrap hero-in">
+    <img class="hero-logo reveal" src="logo-cream.png" alt="Feby's logo" width="96" height="96">
+    <span class="rule reveal"></span>
+    <h1 class="reveal">Feby's Restaurant<br>and Cafe</h1>
+    <span class="rule reveal"></span>
+    <p class="tagline reveal">Homey and Warm Food for You</p>
+    <p class="hero-sub reveal">Filipino culinary heritage since 2011 — crafted for corporate catering, celebrations, party trays and the everyday table.</p>
+    <div class="hero-cta reveal">
+      <a class="btn btn-cream" href="#plan">Plan your event</a>
+      <a class="btn btn-line" href="#order">Order online</a>
     </div>
-    <div class="hero-art">
-      <div class="leaf"></div>
-      <img class="mark" src="logo.jpg" alt="Febys logo">
-      <!-- <div class="tag t2">Great tasting food at a great price 🍃</div> -->
+  </div>
+  <div class="hero-strip">
+    <div class="wrap strip-in">
+      <div><b>2011</b><span>Founded in the UAE</span></div>
+      <div><b>15</b><span>Years of craft</span></div>
+      <div><b>100s</b><span>Guests served weekly</span></div>
+      <div><b>4</b><span>Cuisines: Filipino, Japanese, Chinese &amp; Korean</span></div>
     </div>
   </div>
 </section>
 
-<section id="menu" class="menu-section">
+<!-- ============ ABOUT ============ -->
+<section class="about" id="about">
+  <div class="letter">
+    <div class="wrap narrow reveal">
+      <h2 class="display">Hello from the Owner</h2>
+      <span class="rule light"></span>
+      <p>Preserving family heritage, this restaurant always tries to share the best dishes from family secret recipes. We welcome anyone who wants to taste our food and want to make them feel at home.</p>
+      <p>A warm hug for you</p>
+      <div class="sign">Feby</div>
+    </div>
+  </div>
+
+  <div class="founder">
+    <div class="wrap founder-grid">
+      <figure class="reveal">
+        <img src="cp/feby.jpg" alt="Feby Baguisa, founder of Feby's Kitchen" loading="lazy">
+        <figcaption>Feby Baguisa</figcaption>
+      </figure>
+      <div class="reveal">
+        <div class="eyebrow">Our story</div>
+        <h2 class="display dark">About Feby's Kitchen</h2>
+        <p>Feby's Kitchen was founded in 2011 by Feby Cachero Baguisa dela Pena — a Filipino mom who dreamt of having her own restaurant. It started as her sideline while working in the office, her officemates were the first customers, and it later grew online through social media.</p>
+        <p>After 15 years of business knowledge, product development and hard work, we now serve hundreds of customers every week — dine in, delivery, and catering for events. Our menu has evolved from traditional Filipino cuisine to Asian fusion.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="journey">
+    <div class="wrap">
+      <div class="sec-head reveal"><div class="eyebrow">A culinary journey</div><h2 class="display dark">From an office kitchen to every Emirate</h2></div>
+      <ol class="timeline">
+        <li class="reveal"><span>Chapter I · 2011</span><h3>The office kitchen</h3><p>Family recipes shared with officemates — our very first customers.</p></li>
+        <li class="reveal"><span>Chapter II</span><h3>Online &amp; social</h3><p>Home-cooked trays reach more tables through social media orders.</p></li>
+        <li class="reveal"><span>Chapter III</span><h3>Restaurant &amp; cafe</h3><p>A home-like dining room serving chicken, beef, seafood and desserts.</p></li>
+        <li class="reveal"><span>Chapter IV · Today</span><h3>Catering &amp; events</h3><p>Corporate functions, celebrations and party trays for all occasions.</p></li>
+        <li class="reveal next"><span>Our vision</span><h3>Every Emirate</h3><p>Branches across the UAE and the No.1 Filipino restaurant in the country.</p></li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="vm">
+    <div class="vm-col vm-dark reveal">
+      <h3 class="display">Vision</h3><span class="rule light short"></span>
+      <p>We envision to expand and have branches in all Emirates in the next 3 to 4 years and be the best, no.1 Filipino Restaurant in the UAE. We also envision establishing a name that is directly associated with good food, cosiness and a dining experience worth remembering.</p>
+    </div>
+    <div class="vm-col vm-light reveal">
+      <h3 class="display dark">Mission</h3><span class="rule short"></span>
+      <p>Our mission is to provide the best food — not only to satisfy customers' hunger and cravings, but also to provide a high quality service that gives each and every customer the feeling of being not away from home while dining with us.</p>
+    </div>
+  </div>
+
+  <div class="spread">
+    <div class="wrap spread-grid">
+      <img class="reveal" src="cp/spread.jpg" alt="A table of Feby's dishes" loading="lazy">
+      <div class="reveal">
+        <p>Today, we offer a home-like atmosphere and serve quality, sumptuous, freshly cooked dishes from chicken, beef, seafood and desserts — home-cooked food that takes you back home, even when we are far away from it.</p>
+        <p>We provide friendly service in a relaxing ambiance, by staff and owners who truly love what they do.</p>
+        <p class="promise">“In Feby's Kitchen we give happiness and promise to serve only the very best.”</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SERVICES & MENU ============ -->
+<section class="services" id="services">
   <div class="wrap">
-    <div class="sec-head">
-      <h2>Our <em>Menu</em></h2>
-      <p>Tap to add, then send your order straight to us on WhatsApp.</p>
+    <div class="sec-head reveal"><div class="eyebrow">Services</div><h2 class="display dark">Catering &amp; Events</h2>
+      <p>Filipino hospitality, delivered with corporate precision — from boardroom lunches to full buffet celebrations.</p></div>
+
+    <div class="svc-feature">
+      <div class="svc-photos reveal">
+        <img src="cp/grazing.jpg" alt="Grazing table set up for an event" loading="lazy">
+        <img src="cp/chafing.jpg" alt="Buffet line in chafing dishes" loading="lazy">
+      </div>
+      <div class="svc-list">
+        <article class="reveal"><span>01</span><div><h3>Corporate Catering</h3><p>Office lunches, meetings, town halls and company celebrations. Our freshly baked breads and pastries are always a winner at company events.</p></div></article>
+        <article class="reveal"><span>02</span><div><h3>Party Trays &amp; Packages</h3><p>Half and big trays, holiday combos and complete party packages sized by guest count — ready to share.</p></div></article>
+        <article class="reveal"><span>03</span><div><h3>Private Events</h3><p>Birthdays, christenings, reunions and holidays, with buffet set-up and chafing dishes on request.</p></div></article>
+        <article class="reveal"><span>04</span><div><h3>Dine In &amp; Delivery</h3><p>A home-like dining room, plus delivery and pickup across Dubai.</p></div></article>
+      </div>
     </div>
-    <div class="tabs" id="tabs"></div>
-    <div id="menuRoot"></div>
-    <p class="fine" id="footnote">Prices exclude delivery charges. Chafing dish rental is charged separately. Pricing is subject to change based on availability.</p>
+
+    <ol class="steps reveal" aria-label="How catering works">
+      <li><b>Inquire</b><span>Tell us the occasion, date and number of guests.</span></li>
+      <li><b>Tailor the menu</b><span>We propose trays, packages or a full buffet to match your budget.</span></li>
+      <li><b>We cook &amp; deliver</b><span>Freshly cooked on the day, delivered and set up on time.</span></li>
+    </ol>
+  </div>
+
+  <div class="kitchen">
+    <div class="wrap">
+      <div class="sec-head reveal"><div class="eyebrow light">Our kitchen</div><h2 class="display">We Offer</h2>
+        <p>Together with our traditional Filipino cuisine, we are offering Japanese, Chinese and Korean dishes.</p></div>
+      <div class="collections">
+        <article class="col reveal">
+          <div class="col-pics"><img src="cp/yakitori.jpg" alt="Grilled skewers" loading="lazy"><img src="cp/ramen.jpg" alt="Ramen" loading="lazy"></div>
+          <h3>Filipino &amp; Asian Fusion</h3><p>Traditional Filipino favourites alongside Japanese, Chinese and Korean dishes.</p>
+        </article>
+        <article class="col reveal">
+          <div class="col-pics"><img src="cp/yema-cake.jpg" alt="Yema Cheezycake" loading="lazy"><img src="cp/cakes.jpg" alt="Moist chocolate cake" loading="lazy"></div>
+          <h3>Cakes</h3><p>Best-selling Pinoy cakes — Yema Cheezycake and Moist Chocolate Cake. Sweet delicacies that bring you back home.</p>
+        </article>
+        <article class="col reveal">
+          <div class="col-pics"><img src="cp/lasagna.jpg" alt="Lasagna" loading="lazy"><img src="cp/spaghetti.jpg" alt="Pinoy-style spaghetti" loading="lazy"></div>
+          <h3>Pasta</h3><p>Crowd favourites: our signature Baked Mac, Lasagna and Pinoy Style Spaghetti.</p>
+        </article>
+        <article class="col reveal">
+          <div class="col-pics"><img src="cp/halo-halo.jpg" alt="Halo-halo" loading="lazy"><img src="cp/matcha.jpg" alt="Matcha milk tea" loading="lazy"></div>
+          <h3>Drinks</h3><p>Our famous Halo-Halo, milk tea and signature hot and cold drinks.</p>
+        </article>
+        <article class="col reveal">
+          <div class="col-pics"><img src="cp/cheese-bread.jpg" alt="Cheese garlic bread" loading="lazy"><img src="cp/empanada.jpg" alt="Empanada" loading="lazy"></div>
+          <h3>Breads &amp; Pastries</h3><p>Freshly baked every day — always a winner in company events.</p>
+        </article>
+        <article class="col reveal">
+          <div class="col-pics one"><img src="cp/products.jpg" alt="Condiments and spreads in jars" loading="lazy"></div>
+          <h3>Products</h3><p>Condiments and spreads to take away — a taste of Feby's for your own pantry.</p>
+        </article>
+      </div>
+    </div>
+  </div>
+
+  <div class="order" id="order">
+    <div class="wrap">
+      <div class="sec-head reveal"><div class="eyebrow">Menu · Order online</div><h2 class="display dark">Order through WhatsApp</h2>
+        <p>Choose your trays and packages, add them to your order, then send it to us on WhatsApp. We confirm availability, delivery fee and the final total there.</p></div>
+      <ol class="how reveal">
+        <li><b>1</b>Add dishes to your order</li>
+        <li><b>2</b>Enter your details &amp; date</li>
+        <li><b>3</b>Send on WhatsApp — we confirm</li>
+      </ol>
+      <div class="tabs" id="tabs"></div>
+      <div id="menuRoot"></div>
+      <p class="fine" id="footnote">Prices exclude delivery charges. Chafing dish rental is charged separately. Pricing is subject to change based on availability.</p>
+    </div>
   </div>
 </section>
 
-<section class="reviews hidden" id="reviews" aria-label="Customer reviews">
-  <div class="wrap sec-head">
-    <h2>What our <em>customers</em> say</h2>
-    <p>Fresh trays, happy tables.</p>
+<!-- ============ GALLERY ============ -->
+<section class="gallery" id="gallery" aria-label="Photo gallery">
+  <div class="wrap">
+    <div class="sec-head reveal"><div class="eyebrow">Gallery</div><h2 class="display dark">From Our Kitchen</h2><p>Tap a photo to view.</p></div>
+    <div class="g-grid" id="gGrid"></div>
   </div>
-  <div class="rv-lane"><div class="rv-track" id="rvTrack"></div></div>
-  <p class="rv-note hidden" id="rvNote">Sample reviews shown for preview.</p>
 </section>
 
 <div class="lightbox hidden" id="lightbox" role="dialog" aria-modal="true" aria-label="Photo viewer">
@@ -98,45 +220,69 @@
   <button class="lb-nav lb-next" id="lbNext" aria-label="Next photo">›</button>
 </div>
 
-<section class="about" id="about">
-  <div class="wrap about-grid">
-    <div>
-      <div class="eyebrow about-eyebrow">Orders · Catering · Events</div>
-      <h2>Hassle-free <em>parties</em>,<br>Filipino style.</h2>
-      <p>From intimate family dinners to office gatherings of 30 or more, we cook everything fresh and deliver it ready to share. Need buffet setup? Ask about chafing dishes and full catering service.</p>
-      <div class="hero-cta"><a class="btn btn-light" href="https://wa.me/971563267346?text=Hi%20Febys!%20I'd%20like%20to%20ask%20about%20catering%20for%20an%20event." target="_blank" rel="noopener">Ask about catering</a></div>
-    </div>
-    <div class="svc">
-      <div><h4>Food Trays</h4><p>Half and big trays of your favourite ulam, pancit and kakanin.</p></div>
-      <div><h4>Party Packages</h4><p>Ready-made spreads for 4 to 30 guests.</p></div>
-      <div><h4>Lechon &amp; Cochinillo</h4><p>Whole roast pig by weight, lechon belly roll and lechon ulo.</p></div>
-      <div><h4>Events</h4><p>Buffet catering with chafing dish setup for celebrations.</p></div>
-    </div>
+<!-- ============ REVIEWS ============ -->
+<section class="reviews" id="reviews" aria-label="Customer reviews">
+  <div class="wrap">
+    <div class="sec-head reveal"><h2 class="display">What They Say About Us</h2><p>Messages from our customers.</p></div>
   </div>
-  <div class="wrap g-wrap" id="gallery" aria-label="Photo gallery">
-    <div class="g-head"><h3>From our <em>kitchen</em></h3><span>Tap a photo to view</span></div>
-    <div class="g-grid" id="gGrid"></div>
-  </div>
+  <div class="rv-lane"><div class="rv-track" id="rvTrack"></div></div>
+  <div class="rv-lane rv-lane2"><div class="rv-track rev" id="rvTrack2"></div></div>
+  <p class="rv-note hidden" id="rvNote">Some reviews shown are samples.</p>
 </section>
 
-<section id="contact">
-  <div class="wrap">
-    <div class="sec-head"><h2>Visit or <em>message</em> us</h2></div>
-    <div class="contact">
-      <a href="https://wa.me/971563267346" target="_blank" rel="noopener"><small>WhatsApp / Call</small><b>056 326 7346</b></a>
-      <a class="email" href="mailto:info.febyskitchen@gmail.com"><small>Email</small><b>info.febyskitchen@gmail.com</b></a>
-      <a href="https://maps.google.com/?q=Al+Rigga+Corniche+Deira+Dubai" target="_blank" rel="noopener"><small>Find us</small><b>Al Rigga, Corniche Deira</b></a>
-      <a href="https://www.facebook.com/febyskitchenuae" target="_blank" rel="noopener"><small>Facebook</small><b>Febys Kitchen UAE</b></a>
+<!-- ============ CONTACT ============ -->
+<section class="contact" id="contact">
+  <div class="contact-grid">
+    <div class="contact-info">
+      <h2 class="display reveal">Let's Plan Your Table</h2>
+      <span class="rule light"></span>
+      <ul class="c-list reveal">
+        <li><small>Catering &amp; events</small><a href="tel:+971547367248">054 736 7248</a></li>
+        <li><small>Orders on WhatsApp</small><a id="waLink" href="https://wa.me/971563267346" target="_blank" rel="noopener">056 326 7346</a></li>
+        <li><small>Email</small><a href="mailto:febyskitchenuae@gmail.com">febyskitchenuae@gmail.com</a></li>
+        <li><small>Visit</small><a href="https://maps.google.com/?q=Al+Rigga+Corniche+Deira+Dubai" target="_blank" rel="noopener">Al Rigga, Corniche Deira, Dubai</a></li>
+        <li><small>Facebook</small><a href="https://www.facebook.com/febyskitchenuae" target="_blank" rel="noopener">Feby's Kitchen UAE</a></li>
+      </ul>
+      <div class="owner">Feby Cachero Baguisa – dela Pena</div>
+    </div>
+    <div class="plan" id="plan">
+      <form class="plan-form reveal" id="planForm" novalidate>
+        <h3>Catering inquiry</h3>
+        <p>Send the details on WhatsApp and we'll come back with a proposal.</p>
+        <div class="row2">
+          <label>Your name<input name="name" required autocomplete="name"></label>
+          <label>Company<input name="company" autocomplete="organization" placeholder="Optional"></label>
+        </div>
+        <div class="row2">
+          <label>Type of event
+            <select name="type">
+              <option>Corporate event</option><option>Office lunch / meeting</option><option>Birthday</option>
+              <option>Wedding / anniversary</option><option>Christening</option><option>Holiday party</option><option>Other</option>
+            </select></label>
+          <label>Number of guests<input name="guests" type="number" min="1" max="2000" inputmode="numeric" required></label>
+        </div>
+        <div class="row2">
+          <label>Event date<input name="date" type="date" required id="planDate"></label>
+          <label>Service
+            <select name="service"><option>Party trays (drop-off)</option><option>Buffet with chafing dishes</option><option>Packed meals</option><option>Not sure yet</option></select></label>
+        </div>
+        <label>Location / notes<textarea name="notes" rows="2" placeholder="Area, budget, dishes you have in mind"></textarea></label>
+        <button class="btn btn-rust full" type="submit">Send inquiry on WhatsApp</button>
+      </form>
     </div>
   </div>
 </section>
 
 <footer>
-  <img class="mark" src="logo.jpg" alt="Febys logo">
-  <div>Great tasting food at a great price.</div>
-  <div class="copyright">© <span id="yr"></span> Febys · Dubai, UAE</div>
-  <a class="admin-link" href="admin.html" target="_blank" rel="nofollow noopener"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Admin login</a>
-  <div class="powered"><span>Powered by</span><a href="https://breadywebstudio.vercel.app/" target="_blank" rel="noopener" title="Bready Web Studios"><img src="bready-web-studios.png" alt="Bready Web Studios" width="104" height="30"></a></div>
+  <div class="wrap foot-in">
+    <img class="f-logo" src="logo.jpg" alt="Feby's logo" width="72" height="72">
+    <div class="f-name">Feby's Restaurant and Cafe</div>
+    <div class="f-tag">Homey and Warm Food for You</div>
+    <nav class="f-nav" aria-label="Footer"><a href="#home">Home</a><a href="#about">About</a><a href="#services">Services &amp; Menu</a><a href="#gallery">Gallery</a><a href="#reviews">Reviews</a><a href="#contact">Contact</a></nav>
+    <div class="copyright">© <span id="yr"></span> Feby's Kitchen · Dubai, UAE</div>
+    <a class="admin-link" href="admin.html" target="_blank" rel="nofollow noopener"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Admin login</a>
+    <div class="powered"><span>Powered by</span><a href="https://breadywebstudio.vercel.app/" target="_blank" rel="noopener" title="Bready Web Studios"><img src="bready-web-studios.png" alt="Bready Web Studios" width="104" height="30"></a></div>
+  </div>
 </footer>
 
 <div class="overlay" id="overlay"></div>

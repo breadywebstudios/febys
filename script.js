@@ -108,7 +108,8 @@ function renderCart(){
   $("#dTitle").textContent = "Your order";
   if(!cart.length){
     $("#dBody").innerHTML = `<div class="empty"><img class="mark" src="logo.jpg" alt=""><p>Your order is empty.<br>Add something delicious from the menu.</p></div>`;
-    $("#dFoot").innerHTML = `<button class="btn btn-dark full" onclick="closeCart()">Browse menu</button>`;
+    $("#dFoot").innerHTML = `<button class="btn btn-dark full" id="browseMenu">Browse the menu</button>`;
+    $("#browseMenu").onclick = () => { closeCart(); document.getElementById("order").scrollIntoView({behavior:"smooth"}); };
     return;
   }
   const count = cart.reduce((n,l)=>n+l.qty,0);
@@ -266,29 +267,11 @@ function sendOrder(){
 
   // api.whatsapp.com keeps emojis intact (wa.me can turn them into � on Windows)
   window.open(`https://api.whatsapp.com/send?phone=${WHATSAPP}&text=${encodeURIComponent(msg)}`, "_blank");
-  cart = []; save(); updateCount(); closeCart(); toast("Opening WhatsApp… 💚");
+  cart = []; save(); updateCount(); closeCart(); toast("Opening WhatsApp…");
 }
 
 let tt; function toast(t){ const el=$("#toast"); el.textContent=t; el.classList.add("show"); clearTimeout(tt); tt=setTimeout(()=>el.classList.remove("show"),1800); }
 
-/* ============================================================
-   FOOD GALLERY — photos live in the photos/ folder next to this
-   file (febys-01.jpg … febys-16.jpg). Edit labels/order here.
-   ============================================================ */
-const GALLERY = ["Lechon kawali","Chopsuey","Crispy pork","Roast chicken","Chicken cordon bleu","Pancit",
-  "Party trays","Lechon","Food trays","Kaldereta","Crispy kare-kare","Catering buffet",
-  "Pork BBQ","Kare-kare","Filipino feast","Fried chicken & pork"];
-function buildParade(){
-  const shot = i => `<div class="shot"><img src="photos/febys-${String(i+1).padStart(2,"0")}.jpg" alt="${esc(GALLERY[i])}"></div>`;
-  const n = GALLERY.length;
-  // three rows, each starting at a different photo so they don't line up
-  [["#lane1",0],["#lane2",6],["#lane3",11],["#lane4",3],["#lane5",9],["#lane6",13]].forEach(([sel,start])=>{
-    const order = Array.from({length:n},(_,k)=>(start+k)%n);
-    const html = order.map(shot).join("");
-    $(sel+" .track").innerHTML = html + html; // doubled for a seamless loop
-  });
-}
-buildParade();
 
 $("#yr").textContent = new Date().getFullYear();
 renderMenu(); updateCount();
@@ -316,69 +299,72 @@ async function loadLiveMenu(){
     if(live.length){ MENU = live; renderMenu(); }
     const st = settings[0];
     if(st){
-      $("#top").style.display = st.notice_on ? "" : "none";
+      $("#notice").style.display = st.notice_on ? "" : "none";
       $("#noticeTitle").textContent = st.notice_title;
       $("#noticeText").textContent = st.notice_text;
       $("#footnote").textContent = st.footnote;
       if(st.whatsapp && st.whatsapp !== WHATSAPP){
         document.querySelectorAll('a[href*="wa.me/"]').forEach(a => a.href = a.href.replace(/wa\.me\/\d+/, "wa.me/" + st.whatsapp));
         WHATSAPP = st.whatsapp;
+        const local = st.whatsapp.replace(/^971/, "0");
+        if(/^0\d{9}$/.test(local)) $("#waLink").textContent = `${local.slice(0,3)} ${local.slice(3,6)} ${local.slice(6)}`;
       }
     }
   }catch(e){ console.warn("Live menu unavailable, showing built-in menu.", e); }
 }
 loadLiveMenu();
 
-/* ---------- reviews carousel (managed in admin → Reviews) ---------- */
-const SAMPLE_REVIEWS = [
-  { dish:"Combo 1", body:"Sample review: the crispy pata stayed crunchy all the way to our place, and the fried chicken disappeared first. Perfect for a family Sunday.", photo:"Combo1/Combo1.jpg" },
-  { dish:"Combo 2", body:"Sample review: generous trays and the lechon roll was so tender. Everyone asked where we ordered from.", photo:"Combo2/Combo2.jpg" },
-  { dish:"Combo 3", body:"Sample review: the kare-kare and sisig tasted just like home. Delivery was on time for our office lunch.", photo:"Combo3/Combo3.jpg" },
-  { dish:"Lechon Belly Roll", body:"Sample review: crackling skin, juicy inside. We ordered a second roll for the next weekend.", photo:"Combo2/Lechon Roll.jpg" },
-  { dish:"Kare-Kare", body:"Sample review: rich peanut sauce and soft oxtail, with enough bagoong on the side. Lutong bahay talaga.", photo:"Combo3/HalfTray_Karekare.jpg" },
-  { dish:"Crispy Pata", body:"Sample review: crispy, not oily, and the dip was perfect. A hit at our birthday party.", photo:"Combo1/Crispy Pata.jpg" }
-].map(r => ({ ...r, reviewer:"Customer name", rating:5, is_sample:true }));
+/* ---------- reviews (managed in admin → Reviews) ----------
+   Fallback = customer messages from the Feby's Company Profile 2026. */
+const PROFILE_REVIEWS = [
+  "Thank you po sa pag-accept sa same day order… sa uulitin po. Totoo ang tsismis, sobrang sarap po ng mga luto n'yo!",
+  "Can't wait! Thank you for my super yummy comfort food!",
+  "SARAAAP!!!",
+  "You just won a repeat customer!",
+  "Cravings satisfied!",
+  "Salamat din po, nasarapan po sila sa pang-world class na suka!",
+  "Mam grabe ang sarap! Maraming salamat po! Sa uulitin po!"
+].map(body => ({ body, reviewer:"", dish:"", is_sample:false }));
 
 function renderReviews(list){
   if(!list.length){ $("#reviews").classList.add("hidden"); return; }
-  const src = u => /^https?:\/\//.test(u) ? u : encodeURI(u);
-  const card = r => `
-    <article class="rv-card">
-      ${r.photo ? `<div class="rv-photo"><img src="${esc(src(r.photo))}" alt="${esc(r.dish||"Febys dish")}" loading="lazy">${r.is_sample?`<span class="rv-tag">Sample review</span>`:""}</div>` : ""}
-      <div class="rv-body">
-        <div class="rv-stars" aria-label="${r.rating} out of 5">${"★".repeat(r.rating)}${"☆".repeat(5-r.rating)}</div>
-        <p class="rv-text">“${esc((t=>t.charAt(0).toUpperCase()+t.slice(1))(r.body.replace(/^Sample review:\s*/i,"")))}”</p>
-        <div class="rv-who">${esc(r.reviewer||"Customer")}${r.dish?` · <b>${esc(r.dish)}</b>`:""}${!r.photo && r.is_sample?` · Sample review`:""}</div>
-      </div>
-    </article>`;
-  // repeat short lists so the loop always fills wide screens, then double for a seamless loop
-  let row = list.slice(); while(row.length < 8) row = row.concat(list);
-  const html = row.map(card).join("");
-  $("#rvTrack").innerHTML = html + html;
+  const bubble = r => `
+    <figure class="bubble">
+      <p>${esc(r.body.replace(/^Sample review:\s*/i,""))}</p>
+      ${(r.reviewer||r.dish)?`<small>${esc(r.reviewer||"")}${r.reviewer&&r.dish?" · ":""}${esc(r.dish||"")}</small>`:""}
+      ${r.is_sample?`<span class="tag">Sample</span>`:""}
+    </figure>`;
+  const half = Math.ceil(list.length/2);
+  const rows = list.length > 3 ? [list.slice(0,half), list.slice(half)] : [list, list.slice().reverse()];
+  [["#rvTrack",rows[0]],["#rvTrack2",rows[1]]].forEach(([sel,row])=>{
+    let r = row.slice(); while(r.length < 8) r = r.concat(row);   // fill wide screens
+    const html = r.map(bubble).join("");
+    $(sel).innerHTML = html + html;                                 // doubled for a seamless loop
+  });
   $("#rvNote").classList.toggle("hidden", !list.some(r=>r.is_sample));
   $("#reviews").classList.remove("hidden");
 }
 (async function loadReviews(){
   try{
-    const r = await fetch(`${SUPABASE_URL}/rest/v1/reviews?select=reviewer,dish,body,rating,photo_url,is_sample&active=eq.true&order=sort,id`,
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/reviews?select=reviewer,dish,body,is_sample&active=eq.true&order=sort,id`,
                           { headers:{ apikey:SUPABASE_KEY, "Accept-Profile":"febys" } });
     if(!r.ok) throw new Error(r.status);
     const rows = await r.json();
-    renderReviews(rows.map(x => ({ reviewer:x.reviewer, dish:x.dish, body:x.body, rating:Math.min(5,Math.max(1,x.rating|0)), photo:x.photo_url, is_sample:x.is_sample })));
-  }catch(e){ renderReviews(SAMPLE_REVIEWS); }
+    renderReviews(rows.length ? rows : PROFILE_REVIEWS);
+  }catch(e){ renderReviews(PROFILE_REVIEWS); }
 })();
 /* ---------- photo gallery (choose photos in admin → Gallery) ---------- */
 const GALLERY_FALLBACK = [
-  ["Combo1/Combo1.jpg","Holiday Combo 1"],["Combo2/Combo2.jpg","Holiday Combo 2"],["Combo3/Combo3.jpg","Holiday Combo 3"],
-  ["Combo1/Crispy Pata.jpg","Crispy Pata"],["Combo2/Lechon Roll.jpg","Lechon Belly Roll"],["Combo3/HalfTray_Karekare.jpg","Kare-Kare"],
-  ["Combo1/Feby_FriedChicken.jpg","Feby's Fried Chicken"],["Combo3/Sisig.jpg","Sisig"],["Combo1/Shanghai.jpg","Lumpia Shanghai"],
-  ["photos/febys-07.jpg","Party trays"],["photos/febys-13.jpg","Pork BBQ"],["photos/febys-16.jpg","Fried chicken & crispy pork"]
+  ["cp/grazing.jpg","Event grazing table"],["Combo1/Combo1.jpg","Holiday Combo 1"],["cp/halo-halo.jpg","Halo-Halo"],
+  ["Combo2/Lechon Roll.jpg","Lechon Belly Roll"],["cp/yema-cake.jpg","Yema Cheezycake"],["cp/chafing.jpg","Buffet catering"],
+  ["Combo3/HalfTray_Karekare.jpg","Kare-Kare"],["cp/lasagna.jpg","Lasagna"],["cp/cheese-bread.jpg","Cheese garlic bread"],
+  ["Combo1/Crispy Pata.jpg","Crispy Pata"],["cp/milk-tea.jpg","Milk tea"],["Combo3/Sisig.jpg","Sisig"]
 ].map(([path,caption])=>({path,caption}));
 let galleryList = [], lbIndex = 0;
 function renderGallery(list){
   galleryList = list.filter(g => g.path && !/^[a-z]+:/i.test(g.path) && !g.path.includes(".."));
   if(!galleryList.length){ $("#gallery").classList.add("hidden"); return; }
-  const MAX = 9, extra = galleryList.length - MAX;
+  const MAX = 12, extra = galleryList.length - MAX;
   $("#gGrid").innerHTML = galleryList.slice(0, MAX).map((g,i)=>`
     <button class="g-item" data-g="${i}" aria-label="View ${esc(g.caption||"photo")}">
       <img src="${esc(encodeURI(g.path))}" alt="${esc(g.caption||"Febys food")}" loading="lazy">
@@ -413,4 +399,54 @@ $("#lightbox").addEventListener("touchend", e => { if(lbX==null) return; const d
     if(!r.ok) throw new Error(r.status);
     renderGallery(await r.json());
   }catch(e){ renderGallery(GALLERY_FALLBACK); }
+})();
+
+/* ---------- navigation: mobile menu, active section ---------- */
+const burger = $("#burger"), navLinks = $("#navLinks");
+burger.onclick = () => { const open = !navLinks.classList.contains("open"); navLinks.classList.toggle("open", open); burger.setAttribute("aria-expanded", open); };
+navLinks.addEventListener("click", e => { if(e.target.closest("a")){ navLinks.classList.remove("open"); burger.setAttribute("aria-expanded", false); } });
+if("IntersectionObserver" in window){
+  const links = [...navLinks.querySelectorAll("a")];
+  const spy = new IntersectionObserver(es => es.forEach(e => {
+    if(e.isIntersecting) links.forEach(a => a.classList.toggle("on", a.getAttribute("href") === "#" + e.target.id));
+  }), { rootMargin:"-45% 0px -50% 0px" });
+  ["home","about","services","gallery","reviews","contact"].forEach(id => { const el = document.getElementById(id); if(el) spy.observe(el); });
+}
+
+/* ---------- gentle reveal on scroll ---------- */
+(function(){
+  const els = document.querySelectorAll(".reveal");
+  if(!("IntersectionObserver" in window)) return;
+  document.documentElement.classList.add("js");
+  const io = new IntersectionObserver(es => es.forEach(e => { if(e.isIntersecting){ e.target.classList.add("in"); io.unobserve(e.target); } }), { rootMargin:"0px 0px -60px 0px" });
+  els.forEach(el => io.observe(el));
+})();
+
+/* ---------- catering inquiry → WhatsApp ---------- */
+(function(){
+  const f = $("#planForm"); if(!f) return;
+  const min = new Date(Date.now()+86400000).toISOString().slice(0,10);
+  $("#planDate").min = min;
+  f.addEventListener("submit", e => {
+    e.preventDefault();
+    let ok = true;
+    f.querySelectorAll("[required]").forEach(el => { const bad = !el.value.trim() || !el.checkValidity(); el.classList.toggle("bad", bad); if(bad) ok = false; });
+    if(!ok){ toast("Please complete the highlighted fields"); return; }
+    const d = Object.fromEntries(new FormData(f));
+    const msg = [
+      `*CATERING INQUIRY · FEBY'S*`,
+      `━━━━━━━━━━━━━━━`,
+      `*Name:* ${d.name.trim()}`,
+      d.company.trim() ? `*Company:* ${d.company.trim()}` : "",
+      `*Event:* ${d.type}`,
+      `*Guests:* ${d.guests}`,
+      `*Date:* ${prettyDate(d.date, "12:00").split(" · ")[0]}`,
+      `*Service:* ${d.service}`,
+      d.notes.trim() ? `*Notes:* ${d.notes.trim()}` : "",
+      `━━━━━━━━━━━━━━━`,
+      `Looking forward to your proposal. Salamat po!`
+    ].filter(Boolean).join("\n");
+    window.open(`https://api.whatsapp.com/send?phone=${WHATSAPP}&text=${encodeURIComponent(msg)}`, "_blank");
+    toast("Opening WhatsApp…");
+  });
 })();
