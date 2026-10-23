@@ -369,9 +369,16 @@ const GALLERY_CATEGORIES = [
 function galleryCategory(g){
   if(GALLERY_CATEGORIES.some(category => category.id === g.category)) return g.category;
   const details = `${g.caption||""} ${g.path||""}`.toLowerCase();
-  if(/\b(catering|buffet|chafing|tray|combo|package|corporate|grazing)\b/.test(details)) return "catering";
-  if(/\b(event|wedding|birthday|celebration|party|function)\b/.test(details)) return "events";
+  if(/\b(event|wedding|birthday|celebration|party|function|grazing)\b/.test(details)) return "events";
+  if(/\b(catering|buffet|chafing|tray|combo|package|corporate)\b/.test(details)) return "catering";
   return "food";
+}
+function gallerySrc(path){
+  if(path.startsWith("storage/")){
+    const key = path.slice(8).split("/").map(encodeURIComponent).join("/");
+    return `${SUPABASE_URL}/storage/v1/object/public/febys-menu/${key}`;
+  }
+  return encodeURI(path);
 }
 function renderGallery(list){
   galleryList = list.filter(g => g.path && !/^[a-z]+:/i.test(g.path) && !g.path.includes(".."));
@@ -382,7 +389,7 @@ function renderGallery(list){
     const extra = photos.length - MAX;
     $(category.grid).innerHTML = photos.length ? photos.slice(0,MAX).map(({photo,index},i)=>`
       <button class="g-item" data-g="${index}" aria-label="View ${esc(photo.caption||"photo")}">
-        <img src="${esc(encodeURI(photo.path))}" alt="${esc(photo.caption||"Febys food")}" loading="lazy">
+        <img src="${esc(gallerySrc(photo.path))}" alt="${esc(photo.caption||"Febys food")}" loading="lazy">
         ${extra>0 && i===MAX-1 ? `<span class="g-more">+${extra}</span>` : (photo.caption?`<figcaption>${esc(photo.caption)}</figcaption>`:"")}
       </button>`).join("") : `<p class="g-empty">More ${category.label.toLowerCase()} photos coming soon.</p>`;
   });
@@ -394,7 +401,7 @@ function renderGallery(list){
   } else items.forEach(el => el.classList.add("in"));
   items.forEach(el => el.onclick = () => openLightbox(+el.dataset.g));
 }
-function showLb(){ const g = galleryList[lbIndex]; $("#lbImg").src = encodeURI(g.path); $("#lbImg").alt = g.caption||"Febys food"; $("#lbCap").textContent = g.caption||""; }
+function showLb(){ const g = galleryList[lbIndex]; $("#lbImg").src = gallerySrc(g.path); $("#lbImg").alt = g.caption||"Febys food"; $("#lbCap").textContent = g.caption||""; }
 function openLightbox(i){ lbIndex = i; showLb(); $("#lightbox").classList.remove("hidden"); document.body.style.overflow="hidden"; $("#lbClose").focus(); }
 function closeLightbox(){ $("#lightbox").classList.add("hidden"); document.body.style.overflow=""; }
 function stepLb(d){ lbIndex = (lbIndex + d + galleryList.length) % galleryList.length; showLb(); }
@@ -411,7 +418,7 @@ $("#lightbox").addEventListener("touchstart", e => { lbX = e.touches[0].clientX;
 $("#lightbox").addEventListener("touchend", e => { if(lbX==null) return; const dx = e.changedTouches[0].clientX - lbX; if(Math.abs(dx)>40) stepLb(dx<0?1:-1); lbX=null; });
 (async function loadGallery(){
   try{
-    const r = await fetch(`${SUPABASE_URL}/rest/v1/gallery?select=path,caption&active=eq.true&order=sort,id`, { headers:{ apikey:SUPABASE_KEY, "Accept-Profile":"febys" } });
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/gallery?select=path,caption,category&active=eq.true&order=sort,id`, { headers:{ apikey:SUPABASE_KEY, "Accept-Profile":"febys" } });
     if(!r.ok) throw new Error(r.status);
     renderGallery(await r.json());
   }catch(e){ renderGallery(GALLERY_FALLBACK); }
