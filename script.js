@@ -407,10 +407,14 @@ burger.onclick = () => { const open = !navLinks.classList.contains("open"); navL
 navLinks.addEventListener("click", e => { if(e.target.closest("a")){ navLinks.classList.remove("open"); burger.setAttribute("aria-expanded", false); } });
 if("IntersectionObserver" in window){
   const links = [...navLinks.querySelectorAll("a")];
-  const spy = new IntersectionObserver(es => es.forEach(e => {
-    if(e.isIntersecting) links.forEach(a => a.classList.toggle("on", a.getAttribute("href") === "#" + e.target.id));
-  }), { rootMargin:"-45% 0px -50% 0px" });
-  ["home","about","services","gallery","reviews","contact"].forEach(id => { const el = document.getElementById(id); if(el) spy.observe(el); });
+  const ids = ["home","about","services","order","gallery","reviews","contact"], seen = new Set();
+  const spy = new IntersectionObserver(es => {
+    es.forEach(e => e.isIntersecting ? seen.add(e.target.id) : seen.delete(e.target.id));
+    // the Menu block sits inside Services, so the later section in the list wins
+    const cur = ids.filter(id => seen.has(id)).pop();
+    if(cur) links.forEach(a => a.classList.toggle("on", a.getAttribute("href") === "#" + cur));
+  }, { rootMargin:"-45% 0px -50% 0px" });
+  ids.forEach(id => { const el = document.getElementById(id); if(el) spy.observe(el); });
 }
 
 /* ---------- gentle reveal on scroll ---------- */
