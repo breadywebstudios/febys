@@ -191,23 +191,17 @@
 <!-- ============ GALLERY ============ -->
 <section class="gallery" id="gallery" aria-label="Photo gallery">
   <div class="wrap">
-    <div class="sec-head reveal"><div class="eyebrow">Gallery</div><h2 class="display dark">From Our Kitchen</h2><p>Tap a photo to view.</p></div>
-    <section class="g-category" aria-labelledby="gallery-food-title">
-      <h3 class="display dark" id="gallery-food-title">Food</h3>
-      <div class="g-grid" id="gGridFood"></div>
-    </section>
-    <section class="g-category" aria-labelledby="gallery-events-title">
-      <h3 class="display dark" id="gallery-events-title">Events</h3>
-      <div class="g-grid" id="gGridEvents"></div>
-    </section>
-    <section class="g-category" aria-labelledby="gallery-catering-title">
-      <h3 class="display dark" id="gallery-catering-title">Catering</h3>
-      <div class="g-grid" id="gGridCatering"></div>
-    </section>
+    <div class="g-head">
+      <div class="sec-head reveal"><div class="eyebrow">Gallery</div><h2 class="display dark">From Our Kitchen</h2><p>Dishes, celebrations and catering set-ups we've had the joy of serving. Tap a photo to take a closer look.</p></div>
+      <div class="g-filters reveal" id="gFilters" role="tablist" aria-label="Filter photos"></div>
+    </div>
+    <div class="g-grid" id="gGrid" aria-live="polite"></div>
+    <div class="g-actions"><button class="g-more-btn hidden" id="gMore" type="button">View all photos</button></div>
   </div>
 </section>
 
 <div class="lightbox hidden" id="lightbox" role="dialog" aria-modal="true" aria-label="Photo viewer">
+  <span class="lb-count" id="lbCount"></span>
   <button class="lb-x" id="lbClose" aria-label="Close">×</button>
   <button class="lb-nav lb-prev" id="lbPrev" aria-label="Previous photo">‹</button>
   <figure><img id="lbImg" alt=""><figcaption id="lbCap"></figcaption></figure>

@@ -1579,28 +1579,71 @@ function gallerySrc(path){
   }
   return encodeURI(path);
 }
+let galleryAll = [], galleryFilter = "all", galleryExpanded = false;
+const gPhone = window.matchMedia("(max-width:860px)");
+const galleryPage = () => gPhone.matches ? 6 : 8;
+// tile sizes that always fill the grid with no gaps: b = big, w = wide, f = full width, s = small
+function gallerySizes(n){
+  const phone = gPhone.matches, out = [];
+  const block = phone ? ["b","s","s","w","s","s"] : ["b","s","s","s","s","w","s","s"];
+  const rest = phone ? {1:["w"],2:["s","s"],3:["w","s","s"],4:["w","s","s","w"],5:["b","s","s","s","s"]}
+                     : {1:["f"],2:["w","w"],3:["w","s","s"],4:["s","s","s","s"],5:["b","s","s","s","s"],6:["w","w","s","s","s","s"],7:["w","s","s","s","s","s","s"]};
+  let k = 0;
+  while(n - out.length >= block.length){ out.push(...block.map((c,i)=> i===0 && !phone && k%2 ? "b r" : c)); k++; }
+  const r = n - out.length; if(r) out.push(...rest[r]);
+  return out;
+}
 function renderGallery(list){
-  galleryList = list.filter(g => g.path && !/^[a-z]+:/i.test(g.path) && !g.path.includes(".."));
-  if(!galleryList.length){ $("#gallery").classList.add("hidden"); return; }
-  const MAX = 6;
-  GALLERY_CATEGORIES.forEach(category => {
-    const photos = galleryList.map((photo,index)=>({photo,index})).filter(({photo}) => galleryCategory(photo) === category.id);
-    const extra = photos.length - MAX;
-    $(category.grid).innerHTML = photos.length ? photos.slice(0,MAX).map(({photo,index},i)=>`
-      <button class="g-item" data-g="${index}" aria-label="View ${esc(photo.caption||"photo")}">
-        <img src="${esc(gallerySrc(photo.path))}" alt="${esc(photo.caption||"Febys food")}" loading="lazy">
-        ${extra>0 && i===MAX-1 ? `<span class="g-more">+${extra}</span>` : (photo.caption?`<figcaption>${esc(photo.caption)}</figcaption>`:"")}
-      </button>`).join("") : `<p class="g-empty">More ${category.label.toLowerCase()} photos coming soon.</p>`;
-  });
+  galleryAll = list.filter(g => g.path && !/^[a-z]+:/i.test(g.path) && !g.path.includes(".."))
+                   .map(g => ({ ...g, cat: galleryCategory(g) }));
+  if(!galleryAll.length){ $("#gallery").classList.add("hidden"); return; }
   $("#gallery").classList.remove("hidden");
-  const items = $("#gallery").querySelectorAll(".g-item");
+  const count = id => id==="all" ? galleryAll.length : galleryAll.filter(g => g.cat===id).length;
+  const chips = [{id:"all",label:"All"}, ...GALLERY_CATEGORIES].filter(c => c.id==="all" || count(c.id));
+  $("#gFilters").innerHTML = chips.map(c =>
+    `<button class="g-chip${c.id===galleryFilter?" on":""}" role="tab" aria-selected="${c.id===galleryFilter}" data-f="${c.id}">${esc(c.label)} <span>${count(c.id)}</span></button>`).join("");
+  drawGalleryGrid();
+}
+function drawGalleryGrid(){
+  galleryList = galleryFilter==="all" ? galleryAll : galleryAll.filter(g => g.cat===galleryFilter);
+  const shown = galleryExpanded ? galleryList : galleryList.slice(0, galleryPage());
+  const sizes = gallerySizes(shown.length);
+  const label = id => (GALLERY_CATEGORIES.find(c => c.id===id)||{}).label || "";
+  $("#gGrid").innerHTML = shown.length ? shown.map((g,i)=>`
+    <button class="g-item ${sizes[i]}" data-g="${i}" aria-label="View ${esc(g.caption||"photo")}">
+      <img src="${esc(gallerySrc(g.path))}" alt="${esc(g.caption||"Feby's food")}" loading="lazy">
+      <span class="g-tag">${esc(label(g.cat))}</span>
+      <span class="g-zoom" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5M11 8v6M8 11h6"/></svg></span>
+      ${g.caption?`<figcaption>${esc(g.caption)}<small>${esc(label(g.cat))}</small></figcaption>`:""}
+    </button>`).join("") : `<p class="g-empty">More photos coming soon.</p>`;
+  const more = $("#gMore"), hidden = galleryList.length - shown.length;
+  more.classList.toggle("hidden", galleryExpanded ? galleryList.length <= galleryPage() : hidden <= 0);
+  more.textContent = galleryExpanded ? "Show fewer" : `View all ${galleryList.length} photos`;
+  const items = $("#gGrid").querySelectorAll(".g-item");
   if("IntersectionObserver" in window){
-    const io = new IntersectionObserver(es => es.forEach((e,k) => { if(e.isIntersecting){ setTimeout(()=>e.target.classList.add("in"), (k%4)*90); io.unobserve(e.target); } }), { rootMargin:"0px 0px -40px 0px" });
+    const io = new IntersectionObserver(es => es.forEach(e => { if(e.isIntersecting){ const k = +e.target.dataset.g; setTimeout(()=>e.target.classList.add("in"), (k % galleryPage())*70); io.unobserve(e.target); } }), { rootMargin:"0px 0px -30px 0px" });
     items.forEach(el => io.observe(el));
   } else items.forEach(el => el.classList.add("in"));
   items.forEach(el => el.onclick = () => openLightbox(+el.dataset.g));
 }
-function showLb(){ const g = galleryList[lbIndex]; $("#lbImg").src = gallerySrc(g.path); $("#lbImg").alt = g.caption||"Febys food"; $("#lbCap").textContent = g.caption||""; }
+$("#gFilters").addEventListener("click", e => {
+  const b = e.target.closest("[data-f]"); if(!b || b.dataset.f===galleryFilter) return;
+  galleryFilter = b.dataset.f; galleryExpanded = false;
+  document.querySelectorAll(".g-chip").forEach(c => { const on = c===b; c.classList.toggle("on", on); c.setAttribute("aria-selected", on); });
+  drawGalleryGrid();
+});
+if(gPhone.addEventListener) gPhone.addEventListener("change", () => { if(galleryAll.length) drawGalleryGrid(); });
+$("#gMore").onclick = () => {
+  galleryExpanded = !galleryExpanded; drawGalleryGrid();
+  if(!galleryExpanded) $("#gallery").scrollIntoView({behavior:"smooth"});
+};
+function showLb(){
+  const g = galleryList[lbIndex], img = $("#lbImg");
+  img.classList.add("swap");
+  setTimeout(() => { img.src = gallerySrc(g.path); img.alt = g.caption||"Feby's food"; img.onload = () => img.classList.remove("swap"); }, 120);
+  $("#lbCap").textContent = g.caption||"";
+  $("#lbCount").textContent = `${lbIndex+1} / ${galleryList.length}`;
+}
 function openLightbox(i){ lbIndex = i; showLb(); $("#lightbox").classList.remove("hidden"); document.body.style.overflow="hidden"; $("#lbClose").focus(); }
 function closeLightbox(){ $("#lightbox").classList.add("hidden"); document.body.style.overflow=""; }
 function stepLb(d){ lbIndex = (lbIndex + d + galleryList.length) % galleryList.length; showLb(); }
