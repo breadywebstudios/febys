@@ -11,6 +11,23 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Italiana&family=Quattrocento:wght@400;700&family=Quattrocento+Sans:ital,wght@0,400;0,700;1,400&family=Pinyon+Script&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
+<!-- Site switch: turn "Under construction" on/off in site-config.js -->
+<script src="site-config.js"></script>
+<script>
+(function(){
+  var cfg = window.FEBYS_SITE || {}, key = "febys_preview";
+  try{
+    var q = new URLSearchParams(location.search).get("preview");
+    if(q && q === cfg.PREVIEW_KEY) sessionStorage.setItem(key, "1");
+    if(q === "off") sessionStorage.removeItem(key);
+    var preview = sessionStorage.getItem(key) === "1";
+  }catch(e){ var preview = false; }
+  if(cfg.UNDER_CONSTRUCTION && !preview){
+    document.documentElement.style.visibility = "hidden";
+    location.replace("construction.html");
+  }
+})();
+</script>
 </head>
 <body>
 

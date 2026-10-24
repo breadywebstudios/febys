@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="only light">
+<meta name="theme-color" content="#6a2e1d">
+<meta name="robots" content="noindex">
+<title>Feby's Kitchen · Under Construction</title>
+<script src="site-config.js"></script>
+<script>
+  // when the site switch is off, send visitors back to the real site
+  if(!(window.FEBYS_SITE && window.FEBYS_SITE.UNDER_CONSTRUCTION)) location.replace("./");
+  history.replaceState(null, "", location.pathname);
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Italiana&family=Quattrocento&family=Quattrocento+Sans&display=swap" rel="stylesheet">
+<style>
+  :root{color-scheme:only light;--rust:#823a26;--rust-d:#6a2e1d;--rust-dd:#4f2216;--cream:#f5ede2}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{min-height:100vh;display:grid;place-items:center;padding:24px;overflow:hidden;
+       font-family:"Quattrocento",Georgia,serif;color:var(--cream);text-align:center;
+       background:radial-gradient(ellipse at 20% 10%,rgba(169,90,65,.55),transparent 55%),
+                  radial-gradient(ellipse at 85% 90%,rgba(79,34,22,.9),transparent 60%),var(--rust-d);
+       user-select:none}
+  body::before{content:"";position:fixed;inset:0;background:url("media/hero-chef.jpg") center/cover;opacity:.12;filter:grayscale(.3)}
+  main{position:relative;max-width:620px;animation:rise 1.2s ease both}
+  img{width:120px;height:auto;margin:0 auto 26px;display:block;opacity:.95}
+  .rule{width:120px;height:1px;background:var(--cream);opacity:.7;margin:22px auto}
+  h1{font-family:"Italiana","Didot",serif;font-weight:400;text-transform:uppercase;letter-spacing:.08em;line-height:1.1;font-size:clamp(34px,7vw,64px)}
+  p{font-size:clamp(17px,2.4vw,21px);line-height:1.6;opacity:.9}
+  small{display:block;margin-top:34px;font-family:"Quattrocento Sans",Arial,sans-serif;font-size:11px;letter-spacing:.3em;text-transform:uppercase;opacity:.65}
+  .dots{display:inline-flex;gap:8px;margin-top:26px}
+  .dots i{width:7px;height:7px;border-radius:50%;background:var(--cream);opacity:.3;animation:blink 1.4s infinite}
+  .dots i:nth-child(2){animation-delay:.2s}.dots i:nth-child(3){animation-delay:.4s}
+  @keyframes blink{50%{opacity:1}}
+  @keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){main,.dots i{animation:none}}
+</style>
+</head>
+<body>
+  <main role="main">
+    <img src="media/logo-cream-trim.png" alt="Feby's">
+    <h1>Under Construction</h1>
+    <div class="rule"></div>
+    <p>Our new website is being prepared with the same warmth we put into every dish. Please check back soon.</p>
+    <div class="dots" aria-hidden="true"><i></i><i></i><i></i></div>
+    <small>Feby's Kitchen · Restaurant &amp; Cafe · Dubai</small>
+  </main>
+</body>
+</html>
