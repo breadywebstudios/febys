@@ -85,9 +85,18 @@ header{position:sticky;top:0;z-index:50;background:rgba(251,248,244,.95);backdro
 .burger[aria-expanded="true"] span:first-child{transform:translateY(3.75px) rotate(45deg)}
 .burger[aria-expanded="true"] span:last-child{transform:translateY(-3.75px) rotate(-45deg)}
 
-.notice{background:var(--olive-d);color:var(--cream)}
-.notice .wrap{display:flex;align-items:center;justify-content:center;gap:12px;padding:10px 24px;font-size:15px;text-align:center;flex-wrap:wrap}
-.notice b{font-family:var(--display);font-style:italic;font-weight:500;font-size:20px;line-height:1.2}
+.notice{position:relative;background:linear-gradient(90deg,#f8ede6,#f3e1d6 50%,#f8ede6);color:var(--ink-2);border-bottom:1px solid #ecd7cb}
+.notice .wrap{display:flex;align-items:center;justify-content:center;gap:10px 14px;padding:9px 24px;font-size:14px;line-height:1.4;text-align:center;flex-wrap:wrap}
+.n-tag{display:inline-flex;align-items:center;gap:8px;background:var(--rust);color:var(--cream);border-radius:999px;padding:5px 13px 5px 10px;font-family:var(--sans);font-weight:700;font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;white-space:nowrap;box-shadow:0 4px 12px rgba(130,58,38,.2)}
+.n-tag i{width:7px;height:7px;border-radius:50%;background:#f3c9a8;box-shadow:0 0 0 0 rgba(243,201,168,.7);animation:nPulse 2.2s ease-out infinite}
+@keyframes nPulse{0%{box-shadow:0 0 0 0 rgba(243,201,168,.7)}70%{box-shadow:0 0 0 7px rgba(243,201,168,0)}100%{box-shadow:0 0 0 0 rgba(243,201,168,0)}}
+.n-text{color:var(--ink-2)}
+.n-link{color:var(--rust);font-weight:700;text-decoration:none;white-space:nowrap;border-bottom:1px solid rgba(130,58,38,.35);padding-bottom:1px;transition:border-color .2s}
+.n-link span{display:inline-block;transition:transform .25s}
+.n-link:hover{border-color:var(--rust)}
+.n-link:hover span{transform:translateX(3px)}
+@media (max-width:860px){.notice .wrap{padding:8px 14px;font-size:12.5px;gap:6px 10px}.n-tag{font-size:10px;padding:4px 10px 4px 8px}.n-link{display:none}}
+@media (prefers-reduced-motion:reduce){.n-tag i{animation:none}}
 
 /* ---------- hero ---------- */
 .hero{position:relative;color:var(--cream);background:var(--rust);overflow:hidden;min-height:calc(100vh - 72px);display:flex;flex-direction:column;justify-content:center}
