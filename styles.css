@@ -95,7 +95,7 @@ header{position:sticky;top:0;z-index:50;background:rgba(251,248,244,.95);backdro
 .n-link span{display:inline-block;transition:transform .25s}
 .n-link:hover{border-color:var(--rust)}
 .n-link:hover span{transform:translateX(3px)}
-@media (max-width:860px){.notice .wrap{padding:8px 14px;font-size:12.5px;gap:6px 10px}.n-tag{font-size:10px;padding:4px 10px 4px 8px}.n-link{display:none}}
+@media (max-width:860px){.notice .wrap{padding:8px 14px;font-size:12.5px;gap:6px 10px}.n-tag{font-size:10px;padding:4px 10px 4px 8px}.n-link{display:inline-flex;align-items:center;gap:4px}}
 @media (prefers-reduced-motion:reduce){.n-tag i{animation:none}}
 
 /* ---------- hero ---------- */
