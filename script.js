@@ -733,7 +733,7 @@ function renderSettings(){
       <h3 style="padding:0">Announcement banner</h3>
       <label class="check"><span class="switch"><input type="checkbox" id="sOn" ${s.notice_on?"checked":""}><span></span></span> Show the banner at the top of the site</label>
       <div class="two">
-        <label class="f">Headline <small>Shown in script lettering</small><input type="text" id="sTitle" value="${esc(s.notice_title)}"></label>
+        <label class="f">Headline <small>Shown in the highlighted tag</small><input type="text" id="sTitle" value="${esc(s.notice_title)}"></label>
         <label class="f">Message<input type="text" id="sText" value="${esc(s.notice_text)}"></label>
       </div>
       <div class="banner-preview" id="sPrev"></div>
