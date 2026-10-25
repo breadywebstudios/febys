@@ -90,7 +90,7 @@ header{position:sticky;top:0;z-index:50;background:rgba(251,248,244,.95);backdro
 .notice b{font-family:var(--display);font-style:italic;font-weight:500;font-size:20px;line-height:1.2}
 
 /* ---------- hero ---------- */
-.hero{position:relative;color:var(--cream);background:var(--rust);overflow:hidden;min-height:calc(100vh - 72px);display:flex;flex-direction:column;justify-content:center}
+.hero{position:relative;color:var(--cream);background:black;overflow:hidden;min-height:calc(100vh - 72px);display:flex;flex-direction:column;justify-content:center}
 .hero-photo{position:absolute;inset:0;background:url("media/hero-chef.jpg") center/cover no-repeat}
 .hero-photo::before{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(100deg,rgba(43,31,24,.94) 0%,rgba(106,46,29,.86) 45%,rgba(130,58,38,.55) 100%)}
 .hero-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
