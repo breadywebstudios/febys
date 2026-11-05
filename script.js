@@ -728,7 +728,20 @@ function drawGallery(){
 function renderSettings(){
   const s = S.settings;
   $("#tab-settings").innerHTML = `
-    <div class="head"><div><h2>Banner &amp; settings</h2><p>The red announcement bar, WhatsApp number and menu footnote.</p></div></div>
+    <div class="head"><div><h2>WhatsApp &amp; settings</h2><p>Where orders and inquiries are sent, the announcement banner and the menu footnote.</p></div></div>
+    <div class="card wa-card">
+      <h3 style="padding:0">WhatsApp numbers</h3>
+      <p class="hint">Type the number with the country code, e.g. <b>971 56 123 4567</b>. UAE numbers like <b>056 123 4567</b> also work. Spaces, + and dashes are fine. Use <b>Test</b> to check it opens the right chat.</p>
+      <div class="two">
+        <label class="f">Orders <small>"Send order on WhatsApp" from the menu goes here</small>
+          <div class="wa-row"><input type="tel" id="sWa" value="${esc(s.whatsapp||"")}" placeholder="971 56 123 4567" autocomplete="off"><button type="button" class="btn ghost" data-watest="#sWa">Test</button></div>
+          <small class="wa-show" id="sWaShow"></small></label>
+        <label class="f">Catering inquiries <small>The "Send inquiry on WhatsApp" form. Leave blank to use the orders number.</small>
+          <div class="wa-row"><input type="tel" id="sWa2" value="${esc(s.inquiry_whatsapp||"")}" placeholder="Same as orders" autocomplete="off"><button type="button" class="btn ghost" data-watest="#sWa2">Test</button></div>
+          <small class="wa-show" id="sWa2Show"></small></label>
+      </div>
+      <div><button class="btn" id="sWaSave">Save WhatsApp numbers</button></div>
+    </div>
     <div class="card">
       <h3 style="padding:0">Announcement banner</h3>
       <label class="check"><span class="switch"><input type="checkbox" id="sOn" ${s.notice_on?"checked":""}><span></span></span> Show the banner at the top of the site</label>
@@ -737,17 +750,36 @@ function renderSettings(){
         <label class="f">Message<input type="text" id="sText" value="${esc(s.notice_text)}"></label>
       </div>
       <div class="banner-preview" id="sPrev"></div>
-      <h3 style="padding:8px 0 0">Ordering</h3>
-      <label class="f">WhatsApp number <small>Orders are sent here. Country code first, digits only, e.g. 971563267346</small><input type="tel" id="sWa" value="${esc(s.whatsapp)}"></label>
+      <h3 style="padding:8px 0 0">Menu</h3>
       <label class="f">Menu footnote <small>Small print under the menu</small><textarea id="sFoot" rows="2">${esc(s.footnote)}</textarea></label>
       <div><button class="btn" id="sSave">Save settings</button></div>
     </div>`;
   const prev = () => { $("#sPrev").innerHTML = `<b>${esc($("#sTitle").value)}</b>${esc($("#sText").value)}`; $("#sPrev").style.opacity = $("#sOn").checked ? 1 : .35; };
   ["#sTitle","#sText"].forEach(k=>$(k).oninput=prev); $("#sOn").onchange=prev; prev();
+  // digits only; "00" prefix dropped; a local UAE number starting with 0 (e.g. 056…) gets 971 in front
+  const digits = v => { let d = String(v||"").replace(/\D/g,"").replace(/^00/,""); if(/^0\d{8,9}$/.test(d)) d = "971" + d.slice(1); return d; };
+  const pretty = d => d ? "+" + d.replace(/^(\d{3})(\d{2})(\d{3})(\d+)$/, "$1 $2 $3 $4") : "";
+  const show = () => {
+    const a = digits($("#sWa").value), b = digits($("#sWa2").value);
+    $("#sWaShow").textContent = a ? (a.length>=9 && a.length<=15 ? "Will receive orders: " + pretty(a) : "Number looks too short or too long") : "Required";
+    $("#sWa2Show").textContent = b ? (b.length>=9 && b.length<=15 ? "Will receive inquiries: " + pretty(b) : "Number looks too short or too long") : (a ? "Using the orders number: " + pretty(a) : "");
+  };
+  ["#sWa","#sWa2"].forEach(k => $(k).oninput = show); show();
+  document.querySelectorAll("[data-watest]").forEach(b => b.onclick = () => {
+    const d = digits($(b.dataset.watest).value) || digits($("#sWa").value);
+    if(d.length < 9) return toast("Enter the number first", true);
+    window.open(`https://api.whatsapp.com/send?phone=${d}&text=${encodeURIComponent("Test message from the Feby's admin")}`, "_blank", "noopener");
+  });
+  $("#sWaSave").onclick = async () => {
+    const wa = digits($("#sWa").value), wa2 = digits($("#sWa2").value);
+    if(wa.length < 9 || wa.length > 15) return toast("Check the orders number — include the country code", true);
+    if(wa2 && (wa2.length < 9 || wa2.length > 15)) return toast("Check the inquiries number — include the country code", true);
+    const { data, error } = await sb.from("settings").update({ whatsapp:wa, inquiry_whatsapp: wa2 || null }).eq("id",1).select().single();
+    if(error) return fail(error, "Couldn't save the WhatsApp numbers");
+    S.settings = data; renderSettings(); toast("WhatsApp numbers saved — the website uses them right away");
+  };
   $("#sSave").onclick = async () => {
-    const wa = $("#sWa").value.replace(/\D/g,"");
-    if(wa.length < 9) return toast("Check the WhatsApp number — include the country code", true);
-    const row = { notice_on:$("#sOn").checked, notice_title:$("#sTitle").value.trim(), notice_text:$("#sText").value.trim(), whatsapp:wa, footnote:$("#sFoot").value.trim() };
+    const row = { notice_on:$("#sOn").checked, notice_title:$("#sTitle").value.trim(), notice_text:$("#sText").value.trim(), footnote:$("#sFoot").value.trim() };
     const { data, error } = await sb.from("settings").update(row).eq("id",1).select().single();
     if(error) return fail(error, "Couldn't save");
     S.settings = data; renderSettings(); toast("Settings saved");
@@ -1205,6 +1237,7 @@ setLoginMode("signin");
    ============================================================ */
 const { SUPABASE_URL, SUPABASE_KEY } = window.FEBYS_SITE;
 let WHATSAPP = window.FEBYS_SITE.WHATSAPP;
+let INQUIRY_WA = WHATSAPP;   // catering inquiries (admin → WhatsApp & settings); falls back to the orders number
 let MENU = [
   { id:"combos", name:"Holiday Combos", note:"Bundles for gatherings", items:[
     { id:"c1", name:"Combo 1", price:180, tone:"g2", list:["1 kilo Lechon Kawali / Crispy Pata","Feby's Fried Chicken","Shanghai (30 pcs)"] },
@@ -1502,11 +1535,17 @@ async function loadLiveMenu(){
       $("#noticeTitle").textContent = st.notice_title;
       $("#noticeText").textContent = st.notice_text;
       $("#footnote").textContent = st.footnote;
-      if(st.whatsapp && st.whatsapp !== WHATSAPP){
-        document.querySelectorAll('a[href*="wa.me/"]').forEach(a => a.href = a.href.replace(/wa\.me\/\d+/, "wa.me/" + st.whatsapp));
+      const fmtWa = d => { const l = d.replace(/^971/, "0"); return /^0\d{9}$/.test(l) ? `${l.slice(0,3)} ${l.slice(3,6)} ${l.slice(6)}` : "+" + d; };
+      if(st.whatsapp){
         WHATSAPP = st.whatsapp;
-        const local = st.whatsapp.replace(/^971/, "0");
-        if(/^0\d{9}$/.test(local)) $("#waLink").textContent = `${local.slice(0,3)} ${local.slice(3,6)} ${local.slice(6)}`;
+        document.querySelectorAll('a[href*="wa.me/"]').forEach(a => a.href = a.href.replace(/wa\.me\/\d+/, "wa.me/" + st.whatsapp));
+        $("#waLink").textContent = fmtWa(st.whatsapp);
+      }
+      INQUIRY_WA = st.inquiry_whatsapp || WHATSAPP;
+      if(st.inquiry_whatsapp && $("#cateringLink")){
+        $("#cateringLink").href = "https://wa.me/" + st.inquiry_whatsapp;
+        $("#cateringLink").target = "_blank"; $("#cateringLink").rel = "noopener";
+        $("#cateringLink").textContent = fmtWa(st.inquiry_whatsapp);
       }
     }
   }catch(e){ console.warn("Live menu unavailable, showing built-in menu.", e); }
@@ -1715,7 +1754,7 @@ if("IntersectionObserver" in window){
       `━━━━━━━━━━━━━━━`,
       `Looking forward to your proposal. Salamat po!`
     ].filter(Boolean).join("\n");
-    window.open(`https://api.whatsapp.com/send?phone=${WHATSAPP}&text=${encodeURIComponent(msg)}`, "_blank");
+    window.open(`https://api.whatsapp.com/send?phone=${INQUIRY_WA || WHATSAPP}&text=${encodeURIComponent(msg)}`, "_blank");
     toast("Opening WhatsApp…");
   });
 })();

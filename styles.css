@@ -722,3 +722,11 @@ body.admin-page .loading{padding:60px;text-align:center;color:var(--muted)}
 }
 
 @media (max-width:380px){.nav{gap:10px}.brand{gap:8px}.brand .mark{width:40px;height:40px}.brand b{font-size:20px}.cart-btn{padding:9px 12px}}
+
+/* admin: WhatsApp numbers card */
+body.admin-page .wa-card{margin-bottom:16px;border-color:#d9b9a8;background:linear-gradient(180deg,#fffaf6,#fff)}
+body.admin-page .wa-card .hint{font-size:13.5px;color:var(--ink-2);margin:-2px 0 4px}
+body.admin-page .wa-row{display:flex;gap:8px;align-items:stretch}
+body.admin-page .wa-row input{flex:1;min-width:0}
+body.admin-page .wa-row .btn{flex:0 0 auto;padding:0 16px}
+body.admin-page .wa-show{display:block;margin-top:6px;color:var(--rust);font-size:12.5px;text-transform:none;letter-spacing:0}
