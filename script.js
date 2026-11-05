@@ -292,7 +292,7 @@ function editItem(it){
   const isNew = !it;
   const d = it ? structuredClone(it) : { category_id:S.cat, name:"", pax:"", description:"", includes:[], price:null, variants:[], badge:"", tone:(S.items.find(i=>i.category_id===S.cat)?.tone)||"g1", photo_url:null, active:true };
   let mode = d.variants?.length ? "sizes" : d.price==null && !isNew ? "ask" : "fixed";
-  let photoFile = null, removePhoto = false;
+  let photoFile = null, removePhoto = false, photoSource = null, photoLook = null;
 
   modal(`
     <div class="mh"><h3>${isNew?"Add item":"Edit item"}</h3><button class="x" data-close>×</button></div>
@@ -329,8 +329,10 @@ function editItem(it){
           <div style="display:grid;gap:8px">
             <div style="display:flex;gap:8px;flex-wrap:wrap">
               <label class="btn ghost sm" style="cursor:pointer">Upload photo<input type="file" id="iFile" accept="image/jpeg,image/png,image/webp" hidden></label>
+              <button type="button" class="btn ghost sm" id="iAdjust">Adjust photo</button>
               <button type="button" class="btn ghost sm" id="iNoPhoto">Remove photo</button>
             </div>
+            <div style="font-weight:400;color:var(--muted)" id="iPhotoNote">Each photo opens in the editor: crop, recentre, zoom and a warm food look.</div>
             <div style="font-weight:400;color:var(--muted)">No photo? The card uses this colour instead:</div>
             <div class="tones" id="iTone">${["g1","g2","g3","g4"].map(t=>`<button type="button" class="${t} ${t===d.tone?"on":""}" data-t="${t}" title="${t}"></button>`).join("")}</div>
           </div>
@@ -367,12 +369,27 @@ function editItem(it){
     $("#pv").className = "pv " + d.tone;
     $("#pv").innerHTML = src ? `<img src="${esc(src)}" alt="">` : esc((($("#iName")?.value)||"Febys").split(" ")[0]);
     $("#iNoPhoto").classList.toggle("hidden", !src);
+    $("#iAdjust").classList.toggle("hidden", !src);
+  };
+  // source = the original file (kept so re-adjusting never re-crops an already cropped photo)
+  const editPhoto = async (source, look) => {
+    const r = await photoEditor(source, { kind:"item", aspect:1, title:$("#iName").value.trim(), look });
+    if(!r) return;
+    photoSource = source; photoLook = r.look; photoFile = r.blob; removePhoto = false;
+    paintPhoto(); $("#iPhotoNote").textContent = photoReadyNote(r.blob) + " — saved when you save the item.";
   };
   $("#iMode").querySelectorAll("button").forEach(b=>b.onclick=()=>{ mode=b.dataset.m; paintMode(); });
   $("#vAdd").onclick = () => { d.variants.push({label:"",price:""}); paintVariants(); };
   $("#iTone").querySelectorAll("button").forEach(b=>b.onclick=()=>{ d.tone=b.dataset.t; $("#iTone").querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b)); paintPhoto(); });
-  $("#iFile").onchange = e => { const f=e.target.files[0]; if(!f) return; if(f.size>15*1024*1024) return toast("That photo is too large (max 15 MB)", true); photoFile=f; removePhoto=false; paintPhoto(); };
-  $("#iNoPhoto").onclick = () => { photoFile=null; removePhoto=true; $("#iFile").value=""; paintPhoto(); };
+  $("#iFile").onchange = e => { const f=e.target.files[0]; e.target.value=""; if(f) editPhoto(f); };
+  $("#iAdjust").onclick = async () => {
+    if(photoSource) return editPhoto(photoSource, photoLook);
+    // photos uploaded through this editor already have the look baked in, so start those neutral
+    const graded = /\/object\/public\//.test(d.photo_url);
+    try{ editPhoto(await fetchPhoto(d.photo_url), graded ? { warmth:0, bright:0, vibrance:0 } : undefined); }
+    catch(e){ fail(e, "Couldn't open the photo"); }
+  };
+  $("#iNoPhoto").onclick = () => { photoFile=null; photoSource=null; removePhoto=true; $("#iFile").value=""; paintPhoto(); };
   $("#iName").oninput = paintPhoto;
   paintVariants(); paintMode(); paintPhoto(); $("#iName").focus();
 
@@ -422,44 +439,244 @@ function editItem(it){
   };
 }
 
-/* ---------- photos ---------- */
-async function shrink(file, max=1400){
-  const bm = await createImageBitmap(file);
-  const s = Math.min(1, max/Math.max(bm.width, bm.height));
-  const c = document.createElement("canvas"); c.width = Math.round(bm.width*s); c.height = Math.round(bm.height*s);
-  c.getContext("2d").drawImage(bm, 0, 0, c.width, c.height);
-  return await new Promise(r=>c.toBlob(r, "image/jpeg", .84));
+/* ============================================================
+   PHOTOS — editor (crop / recentre / zoom), warm "food look",
+   and size optimisation before anything is stored.
+   ============================================================ */
+// Longest side in px and the file-size budget per kind of photo.
+const PHOTO_OUT = {
+  item:    { max:1400, target:350*1024 },   // menu cards + full-size view
+  review:  { max:1200, target:300*1024 },
+  gallery: { max:1800, target:550*1024 }
+};
+const LOOK_DEFAULT = { warmth:55, bright:6, vibrance:35 };   // warm, appetising starting point
+const MAX_SOURCE_BYTES = 30*1024*1024;
+
+let webpOK = null;
+async function canWebp(){
+  if(webpOK === null){
+    const c = document.createElement("canvas"); c.width = c.height = 2;
+    const b = await new Promise(r => c.toBlob(r, "image/webp", .8));
+    webpOK = b?.type === "image/webp";
+  }
+  return webpOK;
 }
-async function compressGalleryPhoto(file){
-  const bm = await createImageBitmap(file);
-  try{
-    if(bm.width*bm.height>80000000) throw new Error("Image dimensions are too large to process safely");
-    const webpTest = await new Promise(resolve=>document.createElement("canvas").toBlob(resolve,"image/webp",.8));
-    const format = webpTest?.type==="image/webp" ? "image/webp" : "image/jpeg";
-    let best = null;
-    for(const maxDimension of [1600,1400,1200,1000]){
-      const scale = Math.min(1,maxDimension/Math.max(bm.width,bm.height));
-      const canvas = document.createElement("canvas");
-      canvas.width = Math.max(1,Math.round(bm.width*scale));
-      canvas.height = Math.max(1,Math.round(bm.height*scale));
-      const context = canvas.getContext("2d");
-      if(!context) throw new Error("Couldn't prepare this image for upload");
-      context.drawImage(bm,0,0,canvas.width,canvas.height);
-      for(const quality of [.82,.72,.62]){
-        const blob = await new Promise(resolve=>canvas.toBlob(resolve,format,quality));
-        if(!blob) throw new Error("Couldn't compress this image");
-        best = blob;
-        if(blob.size<=450*1024) return blob;
-      }
+const newCanvas = (w, h) => { const c = document.createElement("canvas"); c.width = Math.max(1, Math.round(w)); c.height = Math.max(1, Math.round(h)); return c; };
+const toBlob = (c, type, q) => new Promise((res, rej) => c.toBlob(b => b ? res(b) : rej(new Error("Couldn't compress this photo")), type, q));
+
+// High-quality downscale: halve step by step, then a final high-quality draw.
+function drawScaled(src, sx, sy, sw, sh, ow, oh){
+  let cur = src, cx = sx, cy = sy, cw = sw, ch = sh;
+  while(cw > ow*2 && ch > oh*2){
+    const c = newCanvas(cw/2, ch/2), g = c.getContext("2d");
+    g.imageSmoothingEnabled = true; g.imageSmoothingQuality = "high";
+    g.drawImage(cur, cx, cy, cw, ch, 0, 0, c.width, c.height);
+    cur = c; cx = cy = 0; cw = c.width; ch = c.height;
+  }
+  const out = newCanvas(ow, oh), g = out.getContext("2d", { willReadFrequently:true });
+  g.imageSmoothingEnabled = true; g.imageSmoothingQuality = "high";
+  g.drawImage(cur, cx, cy, cw, ch, 0, 0, out.width, out.height);
+  return out;
+}
+
+// Food look: warmer whites and highlights, gentle lift, richer (not garish) colour.
+function applyLook(ctx, w, h, look){
+  const wa = look.warmth/100, br = look.bright/100, vi = look.vibrance/100;
+  if(!wa && !br && !vi) return;
+  const im = ctx.getImageData(0, 0, w, h), d = im.data;
+  const con = 1 + .08*vi + .03*wa;
+  const lut = mul => { const t = new Uint8ClampedArray(256);
+    for(let v = 0; v < 256; v++){ let x = br >= 0 ? v + (255-v)*br*.55 : v*(1 + br*.55); x = ((x*mul) - 128)*con + 128; t[v] = x; }
+    return t; };
+  const lr = lut(1 + .075*wa), lg = lut(1 + .02*wa), lb = lut(1 - .10*wa);
+  const vs = vi*.7;
+  for(let i = 0; i < d.length; i += 4){
+    let r = d[i], g = d[i+1], b = d[i+2];
+    if(vs){
+      const mx = r>g ? (r>b?r:b) : (g>b?g:b), mn = r<g ? (r<b?r:b) : (g<b?g:b);
+      const avg = (r+g+b)/3, k = vs*(1 - (mx-mn)/255);   // boosts muted colours more than vivid ones
+      r += (r-avg)*k; g += (g-avg)*k; b += (b-avg)*k;
+      r = r<0?0:r>255?255:r|0; g = g<0?0:g>255?255:g|0; b = b<0?0:b>255?255:b|0;
     }
-    if(!best || best.size>5*1024*1024) throw new Error("Couldn't compress this image below the 5 MB storage limit");
-    return best;
-  }finally{ bm.close(); }
+    d[i] = lr[r]; d[i+1] = lg[g]; d[i+2] = lb[b];
+  }
+  ctx.putImageData(im, 0, 0);
 }
-async function uploadPhoto(file){
-  const blob = await shrink(file);
-  const path = `items/${Date.now()}-${Math.random().toString(36).slice(2,8)}.jpg`;
-  const { error } = await sb.storage.from(BUCKET).upload(path, blob, { contentType:"image/jpeg", cacheControl:"31536000" });
+
+// Light sharpening to restore crispness lost in resizing.
+function sharpen(ctx, w, h, amount){
+  if(w < 3 || h < 3 || !amount) return;
+  const im = ctx.getImageData(0, 0, w, h), s = im.data, o = new Uint8ClampedArray(s), row = w*4;
+  for(let y = 1; y < h-1; y++) for(let x = 1; x < w-1; x++){
+    const i = y*row + x*4;
+    for(let c = 0; c < 3; c++){ const k = i+c; o[k] = s[k] + (4*s[k] - s[k-4] - s[k+4] - s[k-row] - s[k+row])*amount*.25; }
+  }
+  im.data.set(o); ctx.putImageData(im, 0, 0);
+}
+
+// Crop → resize → look → sharpen → WebP (JPEG fallback), best quality that fits the budget.
+async function renderPhoto(bm, crop, look, out){
+  const sc = Math.min(1, out.max/Math.max(crop.sw, crop.sh));
+  const c = drawScaled(bm, crop.sx, crop.sy, crop.sw, crop.sh, crop.sw*sc, crop.sh*sc);
+  const g = c.getContext("2d", { willReadFrequently:true });
+  applyLook(g, c.width, c.height, look);
+  sharpen(g, c.width, c.height, sc < .75 ? .4 : .2);
+  const type = (await canWebp()) ? "image/webp" : "image/jpeg";
+  let blob;
+  for(const q of [.9, .86, .82, .77, .72, .66, .6]){ blob = await toBlob(c, type, q); if(blob.size <= out.target) break; }
+  if(blob.size > 5*1024*1024) throw new Error("Couldn't make this photo small enough to store");
+  blob.ready = true; blob.w = c.width; blob.h = c.height;
+  return blob;
+}
+async function openBitmap(file){
+  const bm = await createImageBitmap(file);
+  if(bm.width*bm.height > 80e6){ bm.close(); throw new Error("This photo is too large to process"); }
+  return bm;
+}
+// No editing: whole photo, given look (used for "upload the rest as they are").
+async function autoProcess(file, look, kind){
+  const bm = await openBitmap(file);
+  try{ return await renderPhoto(bm, { sx:0, sy:0, sw:bm.width, sh:bm.height }, look, PHOTO_OUT[kind]); }
+  finally{ bm.close(); }
+}
+const photoReadyNote = b => `Photo ready · ${b.w}×${b.h} px · ${Math.max(1, Math.round(b.size/1024))} KB`;
+
+/* Opens the editor. Resolves { blob, look, rest } or null if cancelled.
+   opts: kind ("item" | "review" | "gallery"), aspect (1 | 4/3 | 3/4 | "orig"), title, count, allowRest */
+async function photoEditor(file, opts = {}){
+  const kind = opts.kind || "item", out = PHOTO_OUT[kind];
+  if(file.size > MAX_SOURCE_BYTES){ toast("That photo is too large (max 30 MB)", true); return null; }
+  let bm;
+  try{ bm = await openBitmap(file); }catch(e){ toast(e.message || "Couldn't open that photo", true); return null; }
+  const iw = bm.width, ih = bm.height;
+  const pk = Math.min(1, 1100/Math.max(iw, ih));                 // on-screen preview resolution
+  const base = drawScaled(bm, 0, 0, iw, ih, iw*pk, ih*pk);
+  const view = newCanvas(base.width, base.height), vctx = view.getContext("2d", { willReadFrequently:true });
+  let look = { ...(opts.look || LOOK_DEFAULT) }, aspect = opts.aspect ?? 1, z = 1, cx = iw/2, cy = ih/2, fw = 0, fh = 0;
+  const ASPECTS = [["Square", 1], ["4:3", 4/3], ["3:4", 3/4], ["Original", "orig"]];
+  const SLIDERS = [["warmth", "Warmth", 0, 100], ["bright", "Brightness", -40, 40], ["vibrance", "Vibrance", 0, 100]];
+
+  const root = document.createElement("div");
+  root.className = "pe-root";
+  root.innerHTML = `<div class="overlay"><div class="modal pe" role="dialog" aria-modal="true" aria-label="Edit photo">
+    <div class="mh"><h3>Edit photo${opts.count ? ` <small>${esc(opts.count)}</small>` : ""}</h3><button class="x" data-pe="cancel" aria-label="Close">×</button></div>
+    <div class="mb">
+      ${opts.title ? `<div class="pe-for">${esc(opts.title)}</div>` : ""}
+      <div class="seg" id="peAspect">${ASPECTS.map(([l, a]) => `<button type="button" data-a="${a}">${l}</button>`).join("")}</div>
+      <div class="pe-stage" id="peStage"><div class="pe-frame" id="peFrame"><div class="pe-grid"></div></div></div>
+      <div class="pe-hint">Drag the photo to recentre · scroll or pinch to zoom</div>
+      <div class="pe-row"><span>Zoom</span><input type="range" id="peZoom" min="1" max="5" step="0.01" value="1" aria-label="Zoom"><output id="peZoomOut">1.0×</output></div>
+      <div class="pe-look">
+        <div class="pe-look-head"><b>Food look</b>
+          <div class="pe-look-btns"><button type="button" class="btn ghost sm" id="peCompare">Hold to see original</button><button type="button" class="btn ghost sm" id="peReset">Reset</button></div></div>
+        ${SLIDERS.map(([k, l, mn, mx]) => `<div class="pe-row"><span>${l}</span><input type="range" data-look="${k}" min="${mn}" max="${mx}" step="1" value="${look[k]}" aria-label="${l}"><output data-out="${k}">${look[k]}</output></div>`).join("")}
+      </div>
+      <div class="pe-info" id="peInfo"></div>
+    </div>
+    <div class="mf">
+      ${opts.allowRest ? `<button type="button" class="btn ghost sm" data-pe="rest" title="Save this one, then upload the remaining photos uncropped with this look">Save &amp; upload the rest as they are</button>` : ""}
+      <div class="grow"></div>
+      <button type="button" class="btn ghost" data-pe="cancel">${opts.allowRest ? "Skip this photo" : "Cancel"}</button>
+      <button type="button" class="btn" data-pe="save">Use photo</button>
+    </div></div></div>`;
+  document.body.appendChild(root);
+  const $$ = s => root.querySelector(s), frame = $$("#peFrame"), stage = $$("#peStage"), zoom = $$("#peZoom");
+  frame.prepend(view);
+
+  const ar = () => aspect === "orig" ? iw/ih : aspect;
+  const crop = () => {
+    const A = ar(); let bw = iw, bh = ih;
+    if(iw/ih > A) bw = ih*A; else bh = iw/A;
+    const cw = bw/z, ch = bh/z;
+    cx = Math.min(Math.max(cx, cw/2), iw - cw/2); cy = Math.min(Math.max(cy, ch/2), ih - ch/2);
+    return { sx:cx - cw/2, sy:cy - ch/2, sw:cw, sh:ch };
+  };
+  const layout = () => {
+    const A = ar(), maxW = Math.max(200, stage.clientWidth - 28), maxH = Math.min(440, Math.max(220, innerHeight*.42));
+    fw = maxW; fh = fw/A; if(fh > maxH){ fh = maxH; fw = fh*A; }
+    frame.style.width = fw + "px"; frame.style.height = fh + "px";
+    root.querySelectorAll("#peAspect button").forEach(b => b.classList.toggle("on", String(aspect) === b.dataset.a));
+    place();
+  };
+  const place = () => {
+    const c = crop(), s = fw/c.sw;
+    view.style.width = iw*s + "px"; view.style.height = ih*s + "px";
+    view.style.transform = `translate(${-c.sx*s}px, ${-c.sy*s}px)`;
+    zoom.value = z; $$("#peZoomOut").textContent = z.toFixed(1) + "×";
+    const k = Math.min(1, out.max/Math.max(c.sw, c.sh)), rw = Math.round(c.sw*k), rh = Math.round(c.sh*k), soft = Math.max(rw, rh) < 700;
+    const info = $$("#peInfo");
+    info.textContent = `Saved as ${rw}×${rh} px, compressed to about ${Math.round(out.target/1024)} KB or less.` + (soft ? " Zoomed in a lot — the photo may look soft." : "");
+    info.classList.toggle("warn", soft);
+  };
+  let raf = 0;
+  const paint = (original = false) => {
+    cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(() => { vctx.drawImage(base, 0, 0); if(!original) applyLook(vctx, view.width, view.height, look); });
+  };
+  const setZoom = (v, fx = fw/2, fy = fh/2) => {          // zoom towards the point under the finger / cursor
+    const before = crop(), s0 = fw/before.sw, px = before.sx + fx/s0, py = before.sy + fy/s0;
+    z = Math.min(5, Math.max(1, v));
+    const after = crop(), s1 = fw/after.sw;
+    cx += px - (after.sx + fx/s1); cy += py - (after.sy + fy/s1);
+    place();
+  };
+
+  // drag / pinch
+  const pts = new Map(); let pinch = 0;
+  frame.addEventListener("pointerdown", e => { frame.setPointerCapture(e.pointerId); pts.set(e.pointerId, { x:e.clientX, y:e.clientY }); pinch = 0; });
+  frame.addEventListener("pointermove", e => {
+    const p = pts.get(e.pointerId); if(!p) return;
+    if(pts.size === 1){ const s = fw/crop().sw; cx -= (e.clientX - p.x)/s; cy -= (e.clientY - p.y)/s; place(); }
+    p.x = e.clientX; p.y = e.clientY;
+    if(pts.size === 2){
+      const [a, b] = [...pts.values()], d = Math.hypot(a.x - b.x, a.y - b.y), r = frame.getBoundingClientRect();
+      if(pinch) setZoom(z*d/pinch, (a.x + b.x)/2 - r.left, (a.y + b.y)/2 - r.top);
+      pinch = d;
+    }
+  });
+  const up = e => { pts.delete(e.pointerId); pinch = 0; };
+  frame.addEventListener("pointerup", up); frame.addEventListener("pointercancel", up);
+  frame.addEventListener("wheel", e => { e.preventDefault(); const r = frame.getBoundingClientRect(); setZoom(z*Math.exp(-e.deltaY*.0015), e.clientX - r.left, e.clientY - r.top); }, { passive:false });
+  zoom.oninput = () => setZoom(+zoom.value);
+  root.querySelectorAll("#peAspect button").forEach(b => b.onclick = () => { aspect = b.dataset.a === "orig" ? "orig" : +b.dataset.a; layout(); });
+
+  // look
+  const syncSliders = () => SLIDERS.forEach(([k]) => { $$(`[data-look="${k}"]`).value = look[k]; $$(`[data-out="${k}"]`).textContent = look[k]; });
+  root.querySelectorAll("[data-look]").forEach(inp => inp.oninput = () => { look[inp.dataset.look] = +inp.value; $$(`[data-out="${inp.dataset.look}"]`).textContent = inp.value; paint(); });
+  $$("#peReset").onclick = () => { look = { ...LOOK_DEFAULT }; syncSliders(); paint(); };
+  const cmp = $$("#peCompare");
+  cmp.addEventListener("pointerdown", () => paint(true));
+  ["pointerup", "pointerleave", "pointercancel"].forEach(n => cmp.addEventListener(n, () => paint()));
+
+  const onResize = () => layout();
+  addEventListener("resize", onResize);
+
+  return new Promise(resolve => {
+    const finish = v => { removeEventListener("resize", onResize); removeEventListener("keydown", onKey, true); bm.close(); root.remove(); resolve(v); };
+    const onKey = e => { if(e.key === "Escape"){ e.stopImmediatePropagation(); finish(null); } };
+    addEventListener("keydown", onKey, true);   // runs before the page's own Escape handler, so only the editor closes
+    root.querySelectorAll('[data-pe="cancel"]').forEach(b => b.onclick = () => finish(null));
+    root.querySelectorAll('[data-pe="save"],[data-pe="rest"]').forEach(b => b.onclick = async () => {
+      root.querySelectorAll("[data-pe]").forEach(x => x.disabled = true);
+      const label = b.textContent; b.textContent = "Optimising…";
+      try{ const blob = await renderPhoto(bm, crop(), look, out); finish({ blob, look:{ ...look }, rest:b.dataset.pe === "rest" }); }
+      catch(e){ toast(e.message || "Couldn't process this photo", true); b.textContent = label; root.querySelectorAll("[data-pe]").forEach(x => x.disabled = false); }
+    });
+    layout(); paint();
+  });
+}
+// Re-open an already uploaded photo in the editor.
+async function fetchPhoto(url){
+  const r = await fetch(url, { cache:"no-store" });
+  if(!r.ok) throw new Error("Couldn't load the current photo");
+  return await r.blob();
+}
+
+async function uploadPhoto(blob, kind = "item"){
+  if(!blob.ready) blob = await autoProcess(blob, { warmth:0, bright:0, vibrance:0 }, kind);   // safety: never store an unoptimised original
+  const ext = blob.type === "image/webp" ? "webp" : "jpg";
+  const path = `${kind === "review" ? "reviews" : "items"}/${Date.now()}-${Math.random().toString(36).slice(2,8)}.${ext}`;
+  const { error } = await sb.storage.from(BUCKET).upload(path, blob, { contentType:blob.type, cacheControl:"31536000" });
   if(error) throw error;
   return sb.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
 }
@@ -556,7 +773,9 @@ function editReview(r){
     <div class="mf"><div class="grow"></div><button class="btn ghost" data-close>Cancel</button><button class="btn" id="rSave">${isNew?"Add review":"Save changes"}</button></div>`);
   const paint=()=>{ const src = photoFile ? URL.createObjectURL(photoFile) : (!removePhoto && imgSrc(d.photo_url));
     $("#rPv").innerHTML = src ? `<img src="${esc(src)}" alt="">` : "No photo"; $("#rNoPhoto").classList.toggle("hidden", !src); };
-  $("#rFile").onchange=e=>{ const f=e.target.files[0]; if(!f) return; if(f.size>15*1024*1024) return toast("That photo is too large (max 15 MB)", true); photoFile=f; removePhoto=false; paint(); };
+  $("#rFile").onchange=async e=>{ const f=e.target.files[0]; e.target.value=""; if(!f) return;
+    const r=await photoEditor(f,{ kind:"review", aspect:1, title:$("#rDish").value.trim() });
+    if(!r) return; photoFile=r.blob; removePhoto=false; paint(); toast(photoReadyNote(r.blob)); };
   $("#rNoPhoto").onclick=()=>{ photoFile=null; removePhoto=true; $("#rFile").value=""; paint(); };
   paint();
   $("#rSave").onclick=async()=>{
@@ -566,7 +785,7 @@ function editReview(r){
     const btn=$("#rSave"); btn.disabled=true; btn.textContent="Saving…";
     try{
       const old=d.photo_url;
-      if(photoFile) row.photo_url = await uploadPhoto(photoFile); else if(removePhoto) row.photo_url=null;
+      if(photoFile) row.photo_url = await uploadPhoto(photoFile, "review"); else if(removePhoto) row.photo_url=null;
       let res;
       if(isNew){ row.sort = S.reviews.length ? Math.max(...S.reviews.map(x=>x.sort))+1 : 0; res = await sb.from("reviews").insert(row).select().single(); }
       else res = await sb.from("reviews").update(row).eq("id", r.id).select().single();
@@ -610,7 +829,7 @@ function drawGallery(){
   $("#tab-gallery").innerHTML = `
     <div class="head"><div><h2>Gallery</h2><p>${shown} photo${shown===1?"":"s"} showing under “From our kitchen” on the website. The first photo is shown large.</p></div></div>
     <div class="gal-upload" id="galleryDrop">
-      <div><b>Upload gallery photos</b><div class="gal-upload-hint">Drop image files here, or choose them from your device. Images are resized to at most 1600 px and compressed to about 450 KB when possible. Choose a category before uploading.</div></div>
+      <div><b>Upload gallery photos</b><div class="gal-upload-hint">Drop image files here, or choose them from your device. Each photo opens in the editor to crop, recentre, zoom and warm it up, then it's saved at up to 1800 px and about 550 KB. Choose a category before uploading.</div></div>
       <div class="gal-upload-row">
         <input id="galleryFiles" type="file" accept="image/jpeg,image/png,image/webp" multiple hidden>
         <button class="btn" id="galleryChoose" type="button">Choose photos</button>
@@ -657,13 +876,20 @@ function drawGallery(){
     const accepted=files.filter(f=>["image/jpeg","image/png","image/webp"].includes(f.type));
     const rejected=files.length-accepted.length;
     if(!accepted.length){ status.textContent="Choose JPG, PNG or WEBP image files."; return; }
-    choose.disabled=true; status.textContent=`Uploading 0 of ${accepted.length} photos…`;
-    let added=0; const errors=[];
+    choose.disabled=true; status.textContent=`Preparing ${accepted.length} photo${accepted.length===1?"":"s"}…`;
+    let added=0, skipped=0, restLook=null; const errors=[];
     for(const [i,file] of accepted.entries()){
       let path;
       try{
-        if(file.size>20*1024*1024) throw new Error("File exceeds the 20 MB upload limit");
-        const blob=await compressGalleryPhoto(file);
+        let blob;
+        if(restLook) blob=await autoProcess(file,restLook,"gallery");
+        else{
+          const r=await photoEditor(file,{ kind:"gallery", aspect:"orig", title:file.name,
+            count:accepted.length>1?`${i+1} of ${accepted.length}`:"", allowRest:accepted.length>1 && i<accepted.length-1 });
+          if(!r){ skipped++; continue; }
+          blob=r.blob; if(r.rest) restLook=r.look;
+        }
+        status.textContent=`Uploading ${i+1} of ${accepted.length}…`;
         const extension=blob.type==="image/webp"?"webp":"jpg";
         path=`gallery/${crypto.randomUUID()}.${extension}`;
         const {error:uploadError}=await sb.storage.from(BUCKET).upload(path,blob,{contentType:blob.type,cacheControl:"31536000"});
@@ -674,12 +900,11 @@ function drawGallery(){
         if(error){await sb.storage.from(BUCKET).remove([path]);throw error;}
         S.gallery.push(data); added++;
       }catch(e){errors.push(`${file.name}: ${e.message||"upload failed"}`);}
-      status.textContent=`Uploading ${i+1} of ${accepted.length} photos…`;
     }
     choose.disabled=false;
     drawGallery();
     const statusAfter=$("#galleryUploadStatus");
-    statusAfter.textContent=[`${added} photo${added===1?"":"s"} uploaded to ${GALLERY_CATEGORIES.find(c=>c.id===category).label}.`,rejected?`${rejected} unsupported file${rejected===1?"":"s"} skipped.`:"",...errors].filter(Boolean).join(" ");
+    statusAfter.textContent=[`${added} photo${added===1?"":"s"} uploaded to ${GALLERY_CATEGORIES.find(c=>c.id===category).label}.`,skipped?`${skipped} skipped.`:"",rejected?`${rejected} unsupported file${rejected===1?"":"s"} skipped.`:"",...errors].filter(Boolean).join(" ");
     if(errors.length||rejected) toast(`${added} uploaded; ${errors.length+rejected} failed or skipped. Check the gallery status.`,true);
     else toast(`${added} photo${added===1?"":"s"} uploaded.`);
   }
