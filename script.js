@@ -1747,10 +1747,10 @@ burger.onclick = () => { const open = !navLinks.classList.contains("open"); navL
 navLinks.addEventListener("click", e => { if(e.target.closest("a")){ navLinks.classList.remove("open"); burger.setAttribute("aria-expanded", false); } });
 if("IntersectionObserver" in window){
   const links = [...navLinks.querySelectorAll("a")];
-  const ids = ["home","about","services","order","gallery","reviews","contact"], seen = new Set();
+  const ids = ["home","order","services","gallery","reviews","contact","about"], seen = new Set();
   const spy = new IntersectionObserver(es => {
     es.forEach(e => e.isIntersecting ? seen.add(e.target.id) : seen.delete(e.target.id));
-    // the Menu block sits inside Services, so the later section in the list wins
+    // listed in page order; if two overlap the band, the later one wins
     const cur = ids.filter(id => seen.has(id)).pop();
     if(cur) links.forEach(a => a.classList.toggle("on", a.getAttribute("href") === "#" + cur));
   }, { rootMargin:"-45% 0px -50% 0px" });
