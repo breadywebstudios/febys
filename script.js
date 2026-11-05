@@ -479,6 +479,18 @@ function drawScaled(src, sx, sy, sw, sh, ow, oh){
   return out;
 }
 
+// Soft background for a zoomed-out photo: the photo itself, cover-fitted and heavily blurred, slightly dimmed.
+function blurFill(ctx, src, w, h){
+  const sw = src.width, sh = src.height, sc = Math.max(w/sw, h/sh), cw = w/sc, ch = h/sc;
+  const m = Math.max(w, h), tiny = drawScaled(src, (sw - cw)/2, (sh - ch)/2, cw, ch, Math.max(2, w/m*28), Math.max(2, h/m*28));
+  const mid = newCanvas(tiny.width*4, tiny.height*4), mg = mid.getContext("2d");
+  mg.imageSmoothingEnabled = true; mg.imageSmoothingQuality = "high"; mg.drawImage(tiny, 0, 0, mid.width, mid.height);
+  ctx.save(); ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(mid, 0, 0, w, h);
+  ctx.fillStyle = "rgba(0,0,0,.1)"; ctx.fillRect(0, 0, w, h);
+  ctx.restore();
+}
+
 // Food look: warmer whites and highlights, gentle lift, richer (not garish) colour.
 function applyLook(ctx, w, h, look){
   const wa = look.warmth/100, br = look.bright/100, vi = look.vibrance/100;
@@ -580,8 +592,8 @@ async function photoEditor(file, opts = {}){
       ${opts.title ? `<div class="pe-for">${esc(opts.title)}</div>` : ""}
       ${opts.lockAspect ? `<div class="pe-lock">${esc(opts.lockAspect)}</div>` : `<div class="seg" id="peAspect">${ASPECTS.map(([l, a]) => `<button type="button" data-a="${a}">${l}</button>`).join("")}</div>`}
       <div class="pe-stage" id="peStage"><div class="pe-frame" id="peFrame"><div class="pe-grid"></div></div></div>
-      <div class="pe-hint">Drag the photo to recentre · scroll or pinch to zoom · use Straighten to fix a tilted angle</div>
-      <div class="pe-row"><span>Zoom</span><input type="range" id="peZoom" min="1" max="5" step="0.01" value="1" aria-label="Zoom"><output id="peZoomOut">1.0×</output></div>
+      <div class="pe-hint">Drag the photo to recentre · scroll or pinch to zoom (below 1× fits the whole photo on a soft background) · use Straighten to fix a tilted angle</div>
+      <div class="pe-row"><span>Zoom</span><input type="range" id="peZoom" min="0.5" max="5" step="0.01" value="1" aria-label="Zoom"><output id="peZoomOut">1.0×</output></div>
       <div class="pe-row"><span>Straighten</span><input type="range" id="peTilt" min="-20" max="20" step="0.1" value="0" aria-label="Straighten angle"><output id="peTiltOut">0°</output></div>
       <div class="pe-rot">
         <button type="button" class="btn ghost sm" id="peRotL" title="Rotate 90° left">⟲ Rotate left</button>
@@ -616,19 +628,26 @@ async function photoEditor(file, opts = {}){
     cx = keepCentre ? fx*iw : iw/2; cy = keepCentre ? fy*ih : ih/2;
   };
   rebuild(false);
+  // background shown around the photo when zoomed out below 1×
+  const bg = newCanvas(2, 2), bgctx = bg.getContext("2d");
+  bg.style.width = "100%"; bg.style.height = "100%"; bg.style.visibility = "hidden";
+  frame.prepend(bg);
 
   const ar = () => aspect === "orig" ? iw/ih : aspect;
   const crop = () => {
     const A = ar(); let bw = iw, bh = ih;
     if(iw/ih > A) bw = ih*A; else bh = iw/A;
     const cw = bw/z, ch = bh/z;
-    cx = Math.min(Math.max(cx, cw/2), iw - cw/2); cy = Math.min(Math.max(cy, ch/2), ih - ch/2);
+    // zoomed in: the frame stays inside the photo; zoomed out: the photo stays inside the frame
+    const clampC = (c, half, size) => Math.min(Math.max(c, Math.min(half, size - half)), Math.max(half, size - half));
+    cx = clampC(cx, cw/2, iw); cy = clampC(cy, ch/2, ih);
     return { sx:cx - cw/2, sy:cy - ch/2, sw:cw, sh:ch };
   };
   const layout = () => {
     const A = ar(), maxW = Math.max(200, stage.clientWidth - 28), maxH = Math.min(440, Math.max(220, innerHeight*.42));
     fw = maxW; fh = fw/A; if(fh > maxH){ fh = maxH; fw = fh*A; }
     frame.style.width = fw + "px"; frame.style.height = fh + "px";
+    if(bg.width !== Math.round(fw) || bg.height !== Math.round(fh)){ bg.width = Math.round(fw); bg.height = Math.round(fh); paint(); }
     root.querySelectorAll("#peAspect button").forEach(b => b.classList.toggle("on", String(aspect) === b.dataset.a));
     place();
   };
@@ -636,7 +655,8 @@ async function photoEditor(file, opts = {}){
     const c = crop(), s = fw/c.sw;
     view.style.width = iw*s + "px"; view.style.height = ih*s + "px";
     view.style.transform = `translate(${-c.sx*s}px, ${-c.sy*s}px)`;
-    zoom.value = z; $$("#peZoomOut").textContent = z.toFixed(1) + "×";
+    zoom.value = z; $("#peZoomOut").textContent = z.toFixed(1) + "×";
+    bg.style.visibility = z < 1 ? "visible" : "hidden";
     const k = Math.min(1, out.max/Math.max(c.sw, c.sh)), rw = Math.round(c.sw*k), rh = Math.round(c.sh*k), soft = Math.max(rw, rh) < 700;
     const info = $$("#peInfo");
     info.textContent = `Saved as ${rw}×${rh} px, compressed to about ${Math.round(out.target/1024)} KB or less.` + (soft ? " Zoomed in a lot — the photo may look soft." : "");
@@ -645,11 +665,11 @@ async function photoEditor(file, opts = {}){
   let raf = 0;
   const paint = (original = false) => {
     cancelAnimationFrame(raf);
-    raf = requestAnimationFrame(() => { vctx.drawImage(base, 0, 0); if(!original) applyLook(vctx, view.width, view.height, look); });
+    raf = requestAnimationFrame(() => { vctx.drawImage(base, 0, 0); if(!original) applyLook(vctx, view.width, view.height, look); blurFill(bgctx, view, bg.width, bg.height); });
   };
   const setZoom = (v, fx = fw/2, fy = fh/2) => {          // zoom towards the point under the finger / cursor
     const before = crop(), s0 = fw/before.sw, px = before.sx + fx/s0, py = before.sy + fy/s0;
-    z = Math.min(5, Math.max(1, v));
+    z = Math.min(5, Math.max(.5, v));
     const after = crop(), s1 = fw/after.sw;
     cx += px - (after.sx + fx/s1); cy += py - (after.sy + fy/s1);
     place();
@@ -708,8 +728,14 @@ async function photoEditor(file, opts = {}){
     root.querySelectorAll('[data-pe="save"],[data-pe="rest"]').forEach(b => b.onclick = async () => {
       root.querySelectorAll("[data-pe]").forEach(x => x.disabled = true);
       const label = b.textContent; b.textContent = "Optimising…";
-      try{ const src = rotated() ? drawRotated(bm, 1) : bm;
-        const blob = await renderPhoto(src, crop(), look, out); finish({ blob, look:{ ...look }, rest:b.dataset.pe === "rest" }); }
+      try{ let src = rotated() ? drawRotated(bm, 1) : bm, c = crop();
+        if(z < 1){   // zoomed out: place the photo on its blurred background at the output size
+          const k = Math.min(1, out.max/Math.max(c.sw, c.sh)), comp = newCanvas(c.sw*k, c.sh*k), g = comp.getContext("2d");
+          blurFill(g, src, comp.width, comp.height);
+          g.drawImage(drawScaled(src, 0, 0, iw, ih, iw*k, ih*k), -c.sx*k, -c.sy*k);
+          src = comp; c = { sx:0, sy:0, sw:comp.width, sh:comp.height };
+        }
+        const blob = await renderPhoto(src, c, look, out); finish({ blob, look:{ ...look }, rest:b.dataset.pe === "rest" }); }
       catch(e){ toast(e.message || "Couldn't process this photo", true); b.textContent = label; root.querySelectorAll("[data-pe]").forEach(x => x.disabled = false); }
     });
     layout(); paint();
