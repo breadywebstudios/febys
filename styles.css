@@ -367,10 +367,6 @@ footer{background:var(--paper);color:var(--ink-2);text-align:center;padding:60px
 .admin-link{display:inline-flex;align-items:center;gap:6px;margin-top:14px;color:var(--muted);text-decoration:none;font-family:var(--sans);font-size:12px;border:1px solid var(--line);border-radius:6px;padding:6px 14px}
 .admin-link:hover{color:var(--rust);border-color:var(--rust)}
 .admin-link svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:1.8}
-.powered{display:flex;align-items:center;justify-content:center;gap:10px;margin:22px auto 0;padding-top:18px;border-top:1px solid var(--line);max-width:340px;font-family:var(--sans);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
-.powered img{height:30px;width:auto}
-.powered a{display:block;transition:opacity .2s}
-.powered a:hover{opacity:.75}
 
 /* ---------- cart drawer ---------- */
 .overlay{position:fixed;inset:0;background:rgba(40,16,9,.5);opacity:0;pointer-events:none;transition:.25s;z-index:60}
