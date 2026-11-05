@@ -608,7 +608,7 @@ body.admin-page .switch span::before{content:"";position:absolute;width:17px;hei
 body.admin-page .switch input:checked+span{background:var(--leaf-2)}
 body.admin-page .switch input:checked+span::before{transform:translateX(17px)}
 body.admin-page .empty{padding:40px;text-align:center;color:var(--muted);border:1.5px dashed var(--line);border-radius:14px}
-body.admin-page .overlay{position:fixed;inset:0;background:rgba(20,20,20,.45);z-index:50;display:grid;place-items:center;padding:16px}
+body.admin-page .overlay{position:fixed;inset:0;background:rgba(20,20,20,.45);z-index:50;display:grid;place-items:center;padding:16px;opacity:1;pointer-events:auto;transition:none}
 body.admin-page .modal{background:var(--paper);border-radius:18px;width:min(680px,100%);max-height:calc(100vh - 32px);display:flex;flex-direction:column;overflow:hidden}
 body.admin-page .modal .mh{padding:18px 22px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
 body.admin-page .modal .mh h3{font-family:var(--serif);font-size:26px;font-weight:600}
