@@ -657,6 +657,8 @@ body.admin-page .pe-frame canvas{position:absolute;left:0;top:0;max-width:none;t
 body.admin-page .pe-grid{position:absolute;inset:0;z-index:1;pointer-events:none;
   background-image:linear-gradient(to right,rgba(255,255,255,.28) 1px,transparent 1px),linear-gradient(to bottom,rgba(255,255,255,.28) 1px,transparent 1px);
   background-size:33.3333% 100%,100% 33.3333%;background-position:-1px 0,0 -1px}
+body.admin-page .pe-frame.fine .pe-grid{background-size:11.1111% 100%,100% 11.1111%}   /* denser grid while straightening */
+body.admin-page .pe-rot{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:-4px}
 body.admin-page .pe-hint{font-size:12.5px;color:var(--muted);text-align:center;margin-top:-4px}
 body.admin-page .pe-row{display:grid;grid-template-columns:92px 1fr 44px;gap:10px;align-items:center;font-size:13.5px;color:var(--ink-2)}
 body.admin-page .pe-row input[type=range]{width:100%;accent-color:var(--leaf-2);cursor:pointer}

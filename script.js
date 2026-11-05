@@ -548,10 +548,25 @@ async function photoEditor(file, opts = {}){
   if(file.size > MAX_SOURCE_BYTES){ toast("That photo is too large (max 30 MB)", true); return null; }
   let bm;
   try{ bm = await openBitmap(file); }catch(e){ toast(e.message || "Couldn't open that photo", true); return null; }
-  const iw = bm.width, ih = bm.height;
-  const pk = Math.min(1, 1100/Math.max(iw, ih));                 // on-screen preview resolution
-  const base = drawScaled(bm, 0, 0, iw, ih, iw*pk, ih*pk);
-  const view = newCanvas(base.width, base.height), vctx = view.getContext("2d", { willReadFrequently:true });
+  const W0 = bm.width, H0 = bm.height;
+  const pk = Math.min(1, 1100/Math.max(W0, H0));                 // on-screen preview resolution
+  const small = drawScaled(bm, 0, 0, W0, H0, W0*pk, H0*pk);
+  // Rotation: quarter turns + fine "straighten" tilt. The working image (iw × ih) is the rotated photo
+  // trimmed to the largest upright rectangle inside it, so no empty corners ever appear.
+  let quarter = 0, tilt = 0, iw = W0, ih = H0, base = small, view = null, vctx = null;
+  const rotAngle = () => quarter*Math.PI/2 + tilt*Math.PI/180;
+  const rotated = () => quarter || tilt;
+  const fitRotation = () => {
+    const sw = quarter % 2 ? H0 : W0, sh = quarter % 2 ? W0 : H0, a = sw/sh, t = Math.abs(tilt)*Math.PI/180, c = Math.cos(t), s = Math.sin(t);
+    iw = Math.min(sw/(c + s/a), sh/(s + c/a)); ih = iw/a;
+  };
+  const drawRotated = (src, k) => {
+    const c = newCanvas(iw*k, ih*k), g = c.getContext("2d");
+    g.imageSmoothingEnabled = true; g.imageSmoothingQuality = "high";
+    g.translate(c.width/2, c.height/2); g.rotate(rotAngle());
+    g.drawImage(src, -W0*k/2, -H0*k/2, W0*k, H0*k);
+    return c;
+  };
   let look = { ...(opts.look || LOOK_DEFAULT) }, aspect = opts.aspect ?? 1, z = 1, cx = iw/2, cy = ih/2, fw = 0, fh = 0;
   const ASPECTS = [["Square", 1], ["4:3", 4/3], ["3:4", 3/4], ["Original", "orig"]];
   const SLIDERS = [["warmth", "Warmth", 0, 100], ["bright", "Brightness", -40, 40], ["vibrance", "Vibrance", 0, 100]];
@@ -564,8 +579,14 @@ async function photoEditor(file, opts = {}){
       ${opts.title ? `<div class="pe-for">${esc(opts.title)}</div>` : ""}
       <div class="seg" id="peAspect">${ASPECTS.map(([l, a]) => `<button type="button" data-a="${a}">${l}</button>`).join("")}</div>
       <div class="pe-stage" id="peStage"><div class="pe-frame" id="peFrame"><div class="pe-grid"></div></div></div>
-      <div class="pe-hint">Drag the photo to recentre · scroll or pinch to zoom</div>
+      <div class="pe-hint">Drag the photo to recentre · scroll or pinch to zoom · use Straighten to fix a tilted angle</div>
       <div class="pe-row"><span>Zoom</span><input type="range" id="peZoom" min="1" max="5" step="0.01" value="1" aria-label="Zoom"><output id="peZoomOut">1.0×</output></div>
+      <div class="pe-row"><span>Straighten</span><input type="range" id="peTilt" min="-20" max="20" step="0.1" value="0" aria-label="Straighten angle"><output id="peTiltOut">0°</output></div>
+      <div class="pe-rot">
+        <button type="button" class="btn ghost sm" id="peRotL" title="Rotate 90° left">⟲ Rotate left</button>
+        <button type="button" class="btn ghost sm" id="peRotR" title="Rotate 90° right">Rotate right ⟳</button>
+        <button type="button" class="btn ghost sm" id="peLevel" title="Undo the straighten angle">Level</button>
+      </div>
       <div class="pe-look">
         <div class="pe-look-head"><b>Food look</b>
           <div class="pe-look-btns"><button type="button" class="btn ghost sm" id="peCompare">Hold to see original</button><button type="button" class="btn ghost sm" id="peReset">Reset</button></div></div>
@@ -581,7 +602,19 @@ async function photoEditor(file, opts = {}){
     </div></div></div>`;
   document.body.appendChild(root);
   const $$ = s => root.querySelector(s), frame = $$("#peFrame"), stage = $$("#peStage"), zoom = $$("#peZoom");
-  frame.prepend(view);
+  // rebuild the preview after a rotation change (keeps the same spot in the middle for tilt changes)
+  const rebuild = (keepCentre = true) => {
+    const fx = cx/iw, fy = cy/ih;
+    fitRotation();
+    base = rotated() ? drawRotated(small, pk) : small;
+    if(!view || view.width !== base.width || view.height !== base.height){
+      const nv = newCanvas(base.width, base.height);
+      if(view) view.replaceWith(nv); else frame.prepend(nv);
+      view = nv; vctx = nv.getContext("2d", { willReadFrequently:true });
+    }
+    cx = keepCentre ? fx*iw : iw/2; cy = keepCentre ? fy*ih : ih/2;
+  };
+  rebuild(false);
 
   const ar = () => aspect === "orig" ? iw/ih : aspect;
   const crop = () => {
@@ -640,6 +673,21 @@ async function photoEditor(file, opts = {}){
   zoom.oninput = () => setZoom(+zoom.value);
   root.querySelectorAll("#peAspect button").forEach(b => b.onclick = () => { aspect = b.dataset.a === "orig" ? "orig" : +b.dataset.a; layout(); });
 
+  // rotate / straighten
+  const tiltIn = $$("#peTilt");
+  const setTilt = v => {
+    tilt = Math.round(Math.min(20, Math.max(-20, v))*10)/10;
+    tiltIn.value = tilt; $$("#peTiltOut").textContent = (tilt > 0 ? "+" : "") + tilt + "°";
+    rebuild(); layout(); paint();
+  };
+  tiltIn.oninput = () => { frame.classList.add("fine"); setTilt(+tiltIn.value); };
+  tiltIn.onchange = () => frame.classList.remove("fine");
+  ["pointerup", "blur"].forEach(n => tiltIn.addEventListener(n, () => frame.classList.remove("fine")));
+  const turn = d => { quarter = (quarter + d + 4) % 4; rebuild(false); layout(); paint(); };
+  $$("#peRotL").onclick = () => turn(-1);
+  $$("#peRotR").onclick = () => turn(1);
+  $$("#peLevel").onclick = () => setTilt(0);
+
   // look
   const syncSliders = () => SLIDERS.forEach(([k]) => { $$(`[data-look="${k}"]`).value = look[k]; $$(`[data-out="${k}"]`).textContent = look[k]; });
   root.querySelectorAll("[data-look]").forEach(inp => inp.oninput = () => { look[inp.dataset.look] = +inp.value; $$(`[data-out="${inp.dataset.look}"]`).textContent = inp.value; paint(); });
@@ -659,7 +707,8 @@ async function photoEditor(file, opts = {}){
     root.querySelectorAll('[data-pe="save"],[data-pe="rest"]').forEach(b => b.onclick = async () => {
       root.querySelectorAll("[data-pe]").forEach(x => x.disabled = true);
       const label = b.textContent; b.textContent = "Optimising…";
-      try{ const blob = await renderPhoto(bm, crop(), look, out); finish({ blob, look:{ ...look }, rest:b.dataset.pe === "rest" }); }
+      try{ const src = rotated() ? drawRotated(bm, 1) : bm;
+        const blob = await renderPhoto(src, crop(), look, out); finish({ blob, look:{ ...look }, rest:b.dataset.pe === "rest" }); }
       catch(e){ toast(e.message || "Couldn't process this photo", true); b.textContent = label; root.querySelectorAll("[data-pe]").forEach(x => x.disabled = false); }
     });
     layout(); paint();
@@ -850,6 +899,7 @@ function drawGallery(){
               <div class="ctl">
                 <label class="switch" title="${x.active?"Showing":"Hidden"}"><input type="checkbox" data-gtog="${x.id}" ${x.active?"checked":""}><span></span></label>
                 <div class="grow"></div>
+                <button class="icon" title="Adjust photo — crop, recentre, zoom, warm look" data-gedit="${x.id}">${ICON.edit}</button>
                 <button class="icon" title="Move earlier" data-gmove="${x.id}" data-dir="-1" ${index===0?"disabled":""}>${ICON_LEFT}</button>
                 <button class="icon" title="Move later" data-gmove="${x.id}" data-dir="1" ${index===S.gallery.length-1?"disabled":""}>${ICON_RIGHT}</button>
                 <button class="icon" title="Remove from gallery (file is kept)" data-gdel="${x.id}">${ICON.del}</button>
@@ -929,6 +979,29 @@ function drawGallery(){
     const list=[...S.gallery], i=list.findIndex(x=>x.id===+b.dataset.gmove), j=i+(+b.dataset.dir);
     if(j<0||j>=list.length) return; [list[i],list[j]]=[list[j],list[i]];
     try{ await persistOrder("gallery", list); S.gallery=list; drawGallery(); }catch(e){ fail(e,"Couldn't reorder"); renderGalleryTab(); }
+  });
+  // re-edit a photo already in the gallery: saves a new optimised copy and points the gallery entry at it
+  t.querySelectorAll("[data-gedit]").forEach(b=>b.onclick=async()=>{
+    const x=S.gallery.find(g=>g.id===+b.dataset.gedit); if(!x) return;
+    b.disabled=true;
+    let source;
+    try{ source=await fetchPhoto(gallerySrc(x.path)); }
+    catch(e){ b.disabled=false; return fail(e,"Couldn't open the photo"); }
+    b.disabled=false;
+    // photos uploaded through the editor already have the warm look baked in, so start those neutral
+    const graded=x.path.startsWith("storage/gallery/");
+    const r=await photoEditor(source,{ kind:"gallery", aspect:"orig", title:x.caption||x.path.split("/").pop(),
+      look: graded ? { warmth:0, bright:0, vibrance:0 } : undefined });
+    if(!r) return;
+    const extension=r.blob.type==="image/webp"?"webp":"jpg", path=`gallery/${crypto.randomUUID()}.${extension}`;
+    toast("Saving photo…");
+    const {error:uploadError}=await sb.storage.from(BUCKET).upload(path,r.blob,{contentType:r.blob.type,cacheControl:"31536000"});
+    if(uploadError) return fail(uploadError,"Couldn't upload the photo");
+    const {error}=await sb.from("gallery").update({path:`storage/${path}`}).eq("id",x.id);
+    if(error){ await sb.storage.from(BUCKET).remove([path]); return fail(error,"Couldn't save the photo"); }
+    // tidy up the previous copy if it was one we uploaded (files in the site's media folder are kept)
+    if(graded && !S.gallery.some(g=>g.id!==x.id && g.path===x.path)) sb.storage.from(BUCKET).remove([x.path.slice(8)]).catch(()=>{});
+    x.path=`storage/${path}`; drawGallery(); toast("Photo updated");
   });
   t.querySelectorAll("[data-gdel]").forEach(b=>b.onclick=async()=>{
     const id=+b.dataset.gdel; const { error } = await sb.from("gallery").delete().eq("id", id);
