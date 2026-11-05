@@ -1554,7 +1554,7 @@ function renderReviews(list){
 })();
 /* ---------- photo gallery (choose photos in admin → Gallery) ---------- */
 const GALLERY_FALLBACK = [
-  ["media/grazing.jpg","Event grazing table"],["media/Combo1.jpg","Holiday Combo 1"],["media/halo-halo.jpg","Halo-Halo"],
+  ["media/grazing.jpg","Event grazing table"],["media/halo-halo.jpg","Halo-Halo"],
   ["media/Lechon Roll.jpg","Lechon Belly Roll"],["media/yema-cake.jpg","Yema Cheezycake"],["media/chafing.jpg","Buffet catering"],
   ["media/HalfTray_Karekare.jpg","Kare-Kare"],["media/lasagna.jpg","Lasagna"],["media/cheese-bread.jpg","Cheese garlic bread"],
   ["media/Crispy Pata.jpg","Crispy Pata"],["media/milk-tea.jpg","Milk tea"],["media/Sisig.jpg","Sisig"]
