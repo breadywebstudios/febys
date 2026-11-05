@@ -373,7 +373,7 @@ function editItem(it){
   };
   // source = the original file (kept so re-adjusting never re-crops an already cropped photo)
   const editPhoto = async (source, look) => {
-    const r = await photoEditor(source, { kind:"item", aspect:1, title:$("#iName").value.trim(), look });
+    const r = await photoEditor(source, { kind:"item", aspect:1, lockAspect:"Square — exactly how it appears on the menu card", title:$("#iName").value.trim(), look });
     if(!r) return;
     photoSource = source; photoLook = r.look; photoFile = r.blob; removePhoto = false;
     paintPhoto(); $("#iPhotoNote").textContent = photoReadyNote(r.blob) + " — saved when you save the item.";
@@ -568,6 +568,7 @@ async function photoEditor(file, opts = {}){
     return c;
   };
   let look = { ...(opts.look || LOOK_DEFAULT) }, aspect = opts.aspect ?? 1, z = 1, cx = iw/2, cy = ih/2, fw = 0, fh = 0;
+  // opts.lockAspect: the shape is fixed (e.g. square menu thumbnails), so the crop you see is exactly what shows on the site
   const ASPECTS = [["Square", 1], ["4:3", 4/3], ["3:4", 3/4], ["Original", "orig"]];
   const SLIDERS = [["warmth", "Warmth", 0, 100], ["bright", "Brightness", -40, 40], ["vibrance", "Vibrance", 0, 100]];
 
@@ -577,7 +578,7 @@ async function photoEditor(file, opts = {}){
     <div class="mh"><h3>Edit photo${opts.count ? ` <small>${esc(opts.count)}</small>` : ""}</h3><button class="x" data-pe="cancel" aria-label="Close">×</button></div>
     <div class="mb">
       ${opts.title ? `<div class="pe-for">${esc(opts.title)}</div>` : ""}
-      <div class="seg" id="peAspect">${ASPECTS.map(([l, a]) => `<button type="button" data-a="${a}">${l}</button>`).join("")}</div>
+      ${opts.lockAspect ? `<div class="pe-lock">${esc(opts.lockAspect)}</div>` : `<div class="seg" id="peAspect">${ASPECTS.map(([l, a]) => `<button type="button" data-a="${a}">${l}</button>`).join("")}</div>`}
       <div class="pe-stage" id="peStage"><div class="pe-frame" id="peFrame"><div class="pe-grid"></div></div></div>
       <div class="pe-hint">Drag the photo to recentre · scroll or pinch to zoom · use Straighten to fix a tilted angle</div>
       <div class="pe-row"><span>Zoom</span><input type="range" id="peZoom" min="1" max="5" step="0.01" value="1" aria-label="Zoom"><output id="peZoomOut">1.0×</output></div>
@@ -1602,21 +1603,28 @@ function card(it){
                   : `<div class="price">${fmt(price)}</div>`;
   // Compact text-first card; a photo, when there is one, fills the right side. A single size option
   // (e.g. "Half tray") is shown as the portion, not as a choice.
-  const portion = it.variants && it.variants.length === 1 ? it.variants[0].label : "";
+  let portion = it.variants && it.variants.length === 1 ? it.variants[0].label : "";
   const choices = it.variants && it.variants.length > 1;
+  // "Bihon · Big tray" / "Canton · Big tray" → portion "Big tray", choices "Bihon" / "Canton"
+  let chipLabels = choices ? it.variants.map(x => x.label) : [], inline = false;
+  if(choices){
+    const tails = chipLabels.map(l => l.includes(" · ") ? l.slice(l.lastIndexOf(" · ") + 3) : null);
+    if(tails[0] && tails.every(t => t === tails[0])){ portion = tails[0]; inline = true; chipLabels = chipLabels.map(l => l.slice(0, l.lastIndexOf(" · "))); }
+  }
+  const chips = choices ? `<div class="variants">${it.variants.map((x,i)=>`<button class="${i===chosen[it.id]?"on":""}" data-var="${i}" title="${esc(x.label)}">${esc(chipLabels[i])}</button>`).join("")}</div>` : "";
   return `<article class="item${it.photo?" has-pic":""}" data-id="${it.id}">
     <div class="body">
       <div class="item-head">
         <div class="item-title">
           ${it.badge?`<span class="badge">${esc(it.badge)}</span>`:""}
           <h4>${esc(it.name)}</h4>
-          ${portion?`<div class="pax">${esc(portion)}</div>`:""}
+          ${inline ? `<div class="pax-row"><div class="pax">${esc(portion)}</div>${chips}</div>` : portion?`<div class="pax">${esc(portion)}</div>`:""}
           ${it.pax?`<div class="pax">Good for ${esc(it.pax)}</div>`:""}
         </div>
       </div>
       ${it.desc?`<p class="desc">${esc(it.desc)}</p>`:""}
       ${it.list?`<ul>${it.list.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
-      ${choices?`<div class="variants">${it.variants.map((x,i)=>`<button class="${i===chosen[it.id]?"on":""}" data-var="${i}">${esc(x.label)}</button>`).join("")}</div>`:""}
+      ${choices && !inline ? chips : ""}
       <div class="foot">${priceHtml}
         <button class="add${price==null?" ask":""}" data-add="${it.id}">${price==null?"Add to inquiry":"Add"}</button>
       </div>
