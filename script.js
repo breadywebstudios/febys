@@ -1600,7 +1600,7 @@ function card(it){
   const priceHtml = v && v.range ? `<div class="price"><small>from</small>AED ${v.range}</div>`
                   : price==null ? `<div class="price price-request"><small>Price</small>on request</div>`
                   : `<div class="price">${fmt(price)}</div>`;
-  // Text-first card: works with or without a photo. A single size option
+  // Compact text-first card; a photo, when there is one, fills the right side. A single size option
   // (e.g. "Half tray") is shown as the portion, not as a choice.
   const portion = it.variants && it.variants.length === 1 ? it.variants[0].label : "";
   const choices = it.variants && it.variants.length > 1;
@@ -1613,7 +1613,6 @@ function card(it){
           ${portion?`<div class="pax">${esc(portion)}</div>`:""}
           ${it.pax?`<div class="pax">Good for ${esc(it.pax)}</div>`:""}
         </div>
-        ${it.photo?`<button type="button" class="pic-btn" data-photo aria-label="View photo of ${esc(it.name)}"><img class="pic" src="${esc(it.photo)}" alt="${esc(it.name)}" loading="lazy"></button>`:""}
       </div>
       ${it.desc?`<p class="desc">${esc(it.desc)}</p>`:""}
       ${it.list?`<ul>${it.list.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
@@ -1622,6 +1621,7 @@ function card(it){
         <button class="add${price==null?" ask":""}" data-add="${it.id}">${price==null?"Add to inquiry":"Add"}</button>
       </div>
     </div>
+    ${it.photo?`<button type="button" class="pic-btn" data-photo aria-label="View photo of ${esc(it.name)}"><img class="pic" src="${esc(it.photo)}" alt="${esc(it.name)}" loading="lazy"></button>`:""}
   </article>`;
 }
 function findItem(id){ for(const c of MENU) for(const it of c.items) if(it.id===id) return it; }
