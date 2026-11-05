@@ -740,7 +740,7 @@ function renderSettings(){
           <div class="wa-row"><input type="tel" id="sWa2" value="${esc(s.inquiry_whatsapp||"")}" placeholder="Same as orders" autocomplete="off"><button type="button" class="btn ghost" data-watest="#sWa2">Test</button></div>
           <small class="wa-show" id="sWa2Show"></small></label>
       </div>
-      <div><button class="btn" id="sWaSave">Save WhatsApp numbers</button></div>
+      <div class="wa-save"><button class="btn" id="sWaSave">Save WhatsApp numbers</button><span class="wa-state" id="sWaState"></span></div>
     </div>
     <div class="card">
       <h3 style="padding:0">Announcement banner</h3>
@@ -764,7 +764,14 @@ function renderSettings(){
     $("#sWaShow").textContent = a ? (a.length>=9 && a.length<=15 ? "Will receive orders: " + pretty(a) : "Number looks too short or too long") : "Required";
     $("#sWa2Show").textContent = b ? (b.length>=9 && b.length<=15 ? "Will receive inquiries: " + pretty(b) : "Number looks too short or too long") : (a ? "Using the orders number: " + pretty(a) : "");
   };
-  ["#sWa","#sWa2"].forEach(k => $(k).oninput = show); show();
+  const dirty = () => {
+    const changed = digits($("#sWa").value) !== (s.whatsapp||"") || (digits($("#sWa2").value)||null) !== (s.inquiry_whatsapp||null);
+    $("#sWaSave").classList.toggle("pulse", changed);
+    $("#sWaState").textContent = changed ? "Not saved yet — click Save WhatsApp numbers" : "Saved";
+    $("#sWaState").classList.toggle("warn", changed);
+    return changed;
+  };
+  ["#sWa","#sWa2"].forEach(k => $(k).oninput = () => { show(); dirty(); }); show(); dirty();
   document.querySelectorAll("[data-watest]").forEach(b => b.onclick = () => {
     const d = digits($(b.dataset.watest).value) || digits($("#sWa").value);
     if(d.length < 9) return toast("Enter the number first", true);
@@ -774,12 +781,21 @@ function renderSettings(){
     const wa = digits($("#sWa").value), wa2 = digits($("#sWa2").value);
     if(wa.length < 9 || wa.length > 15) return toast("Check the orders number — include the country code", true);
     if(wa2 && (wa2.length < 9 || wa2.length > 15)) return toast("Check the inquiries number — include the country code", true);
+    $("#sWaSave").disabled = true; $("#sWaState").textContent = "Saving…";
     const { data, error } = await sb.from("settings").update({ whatsapp:wa, inquiry_whatsapp: wa2 || null }).eq("id",1).select().single();
-    if(error) return fail(error, "Couldn't save the WhatsApp numbers");
+    $("#sWaSave").disabled = false;
+    if(error){ $("#sWaState").textContent = "Not saved — " + (error.message||"please try again"); return fail(error, "Couldn't save the WhatsApp numbers"); }
+    if(!data || data.whatsapp !== wa){ $("#sWaState").textContent = "Not saved — please sign out, sign in again and retry"; return toast("The number wasn't saved — please sign in again", true); }
     S.settings = data; renderSettings(); toast("WhatsApp numbers saved — the website uses them right away");
   };
   $("#sSave").onclick = async () => {
     const row = { notice_on:$("#sOn").checked, notice_title:$("#sTitle").value.trim(), notice_text:$("#sText").value.trim(), footnote:$("#sFoot").value.trim() };
+    if(dirty()){   // also save edited WhatsApp numbers, so a change is never lost
+      const wa = digits($("#sWa").value), wa2 = digits($("#sWa2").value);
+      if(wa.length < 9 || wa.length > 15) return toast("Check the orders number — include the country code", true);
+      if(wa2 && (wa2.length < 9 || wa2.length > 15)) return toast("Check the inquiries number — include the country code", true);
+      row.whatsapp = wa; row.inquiry_whatsapp = wa2 || null;
+    }
     const { data, error } = await sb.from("settings").update(row).eq("id",1).select().single();
     if(error) return fail(error, "Couldn't save");
     S.settings = data; renderSettings(); toast("Settings saved");
@@ -894,7 +910,7 @@ function forDate(o){
 function whatsappOrderDate(date, time){
   if(!date) return "Not specified";
   const d = new Date(date + "T" + (time || "12:00"));
-  return `${d.toLocaleDateString("en-GB", { weekday:"short", day:"numeric", month:"short", year:"numeric" })} · ⏰ ${d.toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit" })}`;
+  return `${d.toLocaleDateString("en-GB", { weekday:"short", day:"numeric", month:"short", year:"numeric" })}, ${d.toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit" })}`;
 }
 function itemPrice(i){
   if(i.price == null) return `<i style="color:var(--muted)">on request</i>`;
@@ -1135,8 +1151,8 @@ function editOrder(id){
     const count=current.reduce((sum,item)=>sum+item.qty,0);
     const itemLines=current.flatMap(item=>{
       const price=item.price==null?"_price on request_":item.range?`AED ${item.range}`:money(item.price*item.qty);
-      const head=`*${item.name}*${item.variant?` (${item.variant})`:""}  ×${item.qty}\n     💵 ${price}${item.qty>1&&item.price!=null&&!item.range?` _(${money(item.price)} each)_`:""}`;
-      return [head,...(item.pax?[`     👥 Good for ${item.pax}`]:[]),...(item.includes||[]).map(include=>`     ▫️ ${include}`),""];
+      const head=`*${item.name}*${item.variant?` (${item.variant})`:""}  ×${item.qty}\n     Price: ${price}${item.qty>1&&item.price!=null&&!item.range?` _(${money(item.price)} each)_`:""}`;
+      return [head,...(item.pax?[`     Good for ${item.pax}`]:[]),...(item.includes||[]).map(include=>`     - ${include}`),""];
     });
     const deliveryDate=whatsappOrderDate(date,time);
     const message=[
@@ -1153,14 +1169,14 @@ function editOrder(id){
       line,
       `*CUSTOMER*`,
       `     ${customer}`,
-      `     📱 ${phone}`,
+      `     Mobile: ${phone}`,
       "",
       mode==="Delivery"?"*DELIVERY*":"*PICKUP*",
-      `     📅 ${deliveryDate}`,
-      mode==="Delivery"?`     📍 ${address}`:"     📍 Febys, Al Rigga, Corniche Deira",
+      `     Date: ${deliveryDate}`,
+      mode==="Delivery"?`     Address: ${address}`:"     Pickup at: Feby's, Al Rigga, Corniche Deira",
       notes?`\n*NOTES*\n     ${notes}`:"",
       line,
-      `Salamat po! Looking forward to it 🙏💚`
+      `Salamat po! Looking forward to it.`
     ].filter((value,index,all)=>!(value===""&&all[index-1]==="")).join("\n");
     window.open(`${waLink(recipient)}&text=${encodeURIComponent(message)}`,"_blank","noopener");
   };
@@ -1428,13 +1444,34 @@ function renderCheckout(){
 }
 
 /* ---------- WhatsApp order message ---------- */
+/* Opens WhatsApp to the number currently saved in admin → WhatsApp & settings.
+   The tab opens straight away (so pop-up blockers allow it), then goes to the latest
+   saved number; if that check is slow it uses the number loaded with the page. */
+async function latestNumbers(){
+  try{
+    const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), 2500);
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/settings?select=whatsapp,inquiry_whatsapp&id=eq.1`, { headers:{ apikey:SUPABASE_KEY, "Accept-Profile":"febys" }, cache:"no-store", signal:ctl.signal });
+    clearTimeout(t);
+    const st = r.ok ? (await r.json())[0] : null;
+    if(st && st.whatsapp){ WHATSAPP = st.whatsapp; INQUIRY_WA = st.inquiry_whatsapp || st.whatsapp; }
+  }catch(e){ /* keep the numbers we already have */ }
+}
+function openWhatsApp(kind, msg){
+  const win = window.open("", "_blank");
+  if(win){ try{ win.document.title = "Opening WhatsApp…"; win.document.body.innerHTML = '<p style="font:16px sans-serif;padding:24px">Opening WhatsApp…</p>'; }catch(e){} }
+  latestNumbers().then(() => {
+    const phone = kind === "inquiry" ? (INQUIRY_WA || WHATSAPP) : WHATSAPP;
+    const url = `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(msg)}`;
+    if(win && !win.closed) win.location.href = url; else window.open(url, "_blank");
+  });
+}
 function prettyDate(iso, time){
   try{
     const d = new Date(iso + "T" + (time||"12:00"));
     const day = d.toLocaleDateString("en-GB", { weekday:"short", day:"numeric", month:"short", year:"numeric" });
     const hr = d.toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit" });
-    return `${day} · ⏰ ${hr}`;
-  }catch(e){ return `${iso} · ⏰ ${time}`; }
+    return `${day}, ${hr}`;
+  }catch(e){ return `${iso}, ${time}`; }
 }
 function saveOrder(order){
   try{
@@ -1457,10 +1494,10 @@ function sendOrder(){
   const count = cart.reduce((s,l)=>s+l.qty,0);
   const items = cart.flatMap((l,i)=>{
     const price = l.price==null ? "_price on request_" : l.range ? `AED ${l.range}` : fmt(l.price*l.qty);
-    const head = `*${l.name}*${l.variant?` (${l.variant})`:""}  ×${l.qty}\n     💵 ${price}${l.qty>1 && l.price!=null && !l.range ? ` _(${fmt(l.price)} each)_` : ""}`;
+    const head = `*${l.name}*${l.variant?` (${l.variant})`:""}  ×${l.qty}\n     Price: ${price}${l.qty>1 && l.price!=null && !l.range ? ` _(${fmt(l.price)} each)_` : ""}`;
     const extra = [];
-    if(l.pax) extra.push(`     👥 Good for ${l.pax}`);
-    (l.list||[]).forEach(x=>extra.push(`     ▫️ ${x}`));
+    if(l.pax) extra.push(`     Good for ${l.pax}`);
+    (l.list||[]).forEach(x=>extra.push(`     - ${x}`));
     return [head, ...extra, ""];
   });
 
@@ -1478,14 +1515,14 @@ function sendOrder(){
     line,
     `*CUSTOMER*`,
     `     ${d.name}`,
-    `     📱 ${d.phone}`,
+    `     Mobile: ${d.phone}`,
     "",
     d.mode==="Delivery" ? `*DELIVERY*` : `*PICKUP*`,
-    `     📅 ${prettyDate(d.date, d.time)}`,
-    d.mode==="Delivery" ? `     📍 ${d.address.trim()}` : `     📍 Febys, Al Rigga, Corniche Deira`,
+    `     Date: ${prettyDate(d.date, d.time)}`,
+    d.mode==="Delivery" ? `     Address: ${d.address.trim()}` : `     Pickup at: Feby's, Al Rigga, Corniche Deira`,
     d.notes.trim() ? `\n*NOTES*\n     ${d.notes.trim()}` : "",
     line,
-    `Salamat po! Looking forward to it 🙏💚`
+    `Salamat po! Looking forward to it.`
   ].filter((x,i,a)=>!(x==="" && a[i-1]==="")).join("\n");
 
   // save a copy for the admin Orders page (runs in the background; WhatsApp opens regardless)
@@ -1497,8 +1534,7 @@ function sendOrder(){
     items: cart.map(l=>({ name:l.name, variant:l.variant||"", qty:l.qty, price:l.price, range:l.range||"", pax:l.pax||"", category:l.cat||"", includes:l.list||[] }))
   });
 
-  // api.whatsapp.com keeps emojis intact (wa.me can turn them into � on Windows)
-  window.open(`https://api.whatsapp.com/send?phone=${WHATSAPP}&text=${encodeURIComponent(msg)}`, "_blank");
+  openWhatsApp("whatsapp", msg);
   cart = []; save(); updateCount(); closeCart(); toast("Opening WhatsApp…");
 }
 
@@ -1754,7 +1790,7 @@ if("IntersectionObserver" in window){
       `━━━━━━━━━━━━━━━`,
       `Looking forward to your proposal. Salamat po!`
     ].filter(Boolean).join("\n");
-    window.open(`https://api.whatsapp.com/send?phone=${INQUIRY_WA || WHATSAPP}&text=${encodeURIComponent(msg)}`, "_blank");
+    openWhatsApp("inquiry", msg);
     toast("Opening WhatsApp…");
   });
 })();

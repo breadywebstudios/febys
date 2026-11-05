@@ -730,3 +730,8 @@ body.admin-page .wa-row{display:flex;gap:8px;align-items:stretch}
 body.admin-page .wa-row input{flex:1;min-width:0}
 body.admin-page .wa-row .btn{flex:0 0 auto;padding:0 16px}
 body.admin-page .wa-show{display:block;margin-top:6px;color:var(--rust);font-size:12.5px;text-transform:none;letter-spacing:0}
+body.admin-page .wa-save{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+body.admin-page .wa-state{font-size:13px;color:#2f6b3a}
+body.admin-page .wa-state.warn{color:#b3261e;font-weight:600}
+body.admin-page #sWaSave.pulse{box-shadow:0 0 0 0 rgba(179,38,30,.5);animation:waPulse 1.6s infinite}
+@keyframes waPulse{70%{box-shadow:0 0 0 10px rgba(179,38,30,0)}100%{box-shadow:0 0 0 0 rgba(179,38,30,0)}}
