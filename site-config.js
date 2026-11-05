@@ -15,7 +15,7 @@
    The admin page (admin.html) always stays open.
    ===================================================================== */
 window.FEBYS_SITE = {
-  UNDER_CONSTRUCTION: true,
+  UNDER_CONSTRUCTION: false,
   PREVIEW_KEY: "febys-preview",
   SUPABASE_URL: "https://ntohdxudxfggsmhxhvho.supabase.co",
   SUPABASE_KEY: "sb_publishable_81P5_TSD4SuHALFDM4Ao-w_W7C5UkuI",
