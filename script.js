@@ -1302,17 +1302,24 @@ function card(it){
   const priceHtml = v && v.range ? `<div class="price"><small>from</small>AED ${v.range}</div>`
                   : price==null ? `<div class="price price-request"><small>Price</small>on request</div>`
                   : `<div class="price">${fmt(price)}</div>`;
-  return `<article class="item" data-id="${it.id}">
-    <div class="thumb ${it.tone||"g1"}">
-      ${it.photo ? `<img src="${esc(it.photo)}" alt="${esc(it.name)}" loading="lazy">` : `<span class="ph">${esc(it.name.split(" ")[0])}</span>`}
-      ${it.badge?`<span class="badge">${esc(it.badge)}</span>`:""}
-    </div>
+  // Text-first card: works with or without a photo. A single size option
+  // (e.g. "Half tray") is shown as the portion, not as a choice.
+  const portion = it.variants && it.variants.length === 1 ? it.variants[0].label : "";
+  const choices = it.variants && it.variants.length > 1;
+  return `<article class="item${it.photo?" has-pic":""}" data-id="${it.id}">
     <div class="body">
-      <h4>${esc(it.name)}</h4>
-      ${it.pax?`<div class="pax">Good for ${esc(it.pax)}</div>`:""}
+      <div class="item-head">
+        <div class="item-title">
+          ${it.badge?`<span class="badge">${esc(it.badge)}</span>`:""}
+          <h4>${esc(it.name)}</h4>
+          ${portion?`<div class="pax">${esc(portion)}</div>`:""}
+          ${it.pax?`<div class="pax">Good for ${esc(it.pax)}</div>`:""}
+        </div>
+        ${it.photo?`<button type="button" class="pic-btn" data-photo aria-label="View photo of ${esc(it.name)}"><img class="pic" src="${esc(it.photo)}" alt="${esc(it.name)}" loading="lazy"></button>`:""}
+      </div>
       ${it.desc?`<p class="desc">${esc(it.desc)}</p>`:""}
       ${it.list?`<ul>${it.list.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
-      ${it.variants?`<div class="variants">${it.variants.map((x,i)=>`<button class="${i===chosen[it.id]?"on":""}" data-var="${i}">${esc(x.label)}</button>`).join("")}</div>`:""}
+      ${choices?`<div class="variants">${it.variants.map((x,i)=>`<button class="${i===chosen[it.id]?"on":""}" data-var="${i}">${esc(x.label)}</button>`).join("")}</div>`:""}
       <div class="foot">${priceHtml}
         <button class="add${price==null?" ask":""}" data-add="${it.id}">${price==null?"Add to inquiry":"Add"}</button>
       </div>
@@ -1325,6 +1332,8 @@ document.addEventListener("click", e=>{
   const tab = e.target.closest(".tab");
   if(tab){ document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t===tab));
            document.getElementById("cat-"+tab.dataset.cat).scrollIntoView({behavior:"smooth"}); return; }
+  const pb = e.target.closest("[data-photo]");
+  if(pb){ const img = pb.querySelector("img"); openPhoto(img.src, img.alt); return; }
   const vb = e.target.closest("[data-var]");
   if(vb){ const art = vb.closest(".item"); const it = findItem(art.dataset.id);
           chosen[it.id] = +vb.dataset.var; art.outerHTML = card(it); return; }
@@ -1720,8 +1729,16 @@ function showLb(){
   $("#lbCount").textContent = `${lbIndex+1} / ${galleryList.length}`;
 }
 function openLightbox(i){ lbIndex = i; showLb(); $("#lightbox").classList.remove("hidden"); document.body.style.overflow="hidden"; $("#lbClose").focus(); }
-function closeLightbox(){ $("#lightbox").classList.add("hidden"); document.body.style.overflow=""; }
-function stepLb(d){ lbIndex = (lbIndex + d + galleryList.length) % galleryList.length; showLb(); }
+function closeLightbox(){ $("#lightbox").classList.add("hidden"); $("#lightbox").classList.remove("single"); document.body.style.overflow=""; }
+// one photo (e.g. a menu dish) in the same viewer — no arrows or counter
+function openPhoto(src, caption){
+  const lb = $("#lightbox"), img = $("#lbImg");
+  img.classList.remove("swap"); img.src = src; img.alt = caption || "";
+  $("#lbCap").textContent = caption || "";
+  lb.classList.add("single"); lb.classList.remove("hidden");
+  document.body.style.overflow = "hidden"; $("#lbClose").focus();
+}
+function stepLb(d){ if($("#lightbox").classList.contains("single")) return; lbIndex = (lbIndex + d + galleryList.length) % galleryList.length; showLb(); }
 $("#lbClose").onclick = closeLightbox;
 $("#lbPrev").onclick = () => stepLb(-1);
 $("#lbNext").onclick = () => stepLb(1);

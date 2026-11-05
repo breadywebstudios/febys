@@ -150,6 +150,10 @@ from febys.categories c
 where c.slug = 'pasta-noodles'
   and not exists (select 1 from febys.menu_items m where m.category_id = c.id and m.name = 'Pansit Bihon / Canton');
 
+-- Holiday flyer shows all 6 combos and 4 packages: make sure they're on
+update febys.menu_items set active = true
+where category_id in (select id from febys.categories where slug in ('combos','packages'));
+
 commit;
 
 -- check
