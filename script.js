@@ -1633,81 +1633,109 @@ const fmt = n => "AED " + n.toLocaleString("en-US");
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
-/* ---------- render menu ---------- */
+/* ---------- render menu ----------
+   menu.html (body.menu-page) shows the full ordering page; the home page shows
+   every category as a printed-menu board that links into it. Both share one cart. */
+const MENU_PAGE = document.body.classList.contains("menu-page");
 function renderMenu(){
-  $("#tabs").innerHTML = MENU.map((c,i)=>`<button class="tab${i?"":" active"}" data-cat="${c.id}">${esc(c.name)}</button>`).join("");
-  $("#menuRoot").innerHTML = MENU.map(c=>`
-    <div class="cat" id="cat-${c.id}">
-      <div class="cat-title"><h3>${esc(c.name)}</h3><span>${esc(c.note)}</span></div>
-      <div class="grid">${c.items.map(card).join("")}</div>
-    </div>`).join("");
+  if(MENU_PAGE) return renderOrderPage();
+  $("#tabs").classList.add("hidden");   // the whole board fits on one sheet; no jump links needed
+  // box at most two specials on the whole sheet, in categories that aren't next to each other
+  boardHot = new Set(); let lastHot = -2;
+  MENU.forEach((c, i) => { const it = c.items.slice(0, 6).find(x => x.badge); if(it && boardHot.size < 2 && i - lastHot > 1){ boardHot.add(it.id); lastHot = i; } });
+  $("#menuRoot").innerHTML = `<div class="clipboard"><span class="clip" aria-hidden="true"></span>
+    <div class="board-mast"><img src="media/logo_trns.png" width="1468" height="779" alt="Feby's"><span>Menu</span></div>
+    <div class="board">${MENU.map(boardPanel).join("")}</div></div>`;
+  boardPanels = [...document.querySelectorAll("#menuRoot .bp")];
+  boardCols = 0; layoutBoard();
 }
-function card(it){
-  if(it.variants && chosen[it.id]==null) chosen[it.id]=0;
-  const v = it.variants ? it.variants[chosen[it.id]] : null;
-  const price = v ? v.price : it.price;
-  const priceHtml = v && v.range ? `<div class="price"><small>from</small>AED ${v.range}</div>`
-                  : price==null ? `<div class="price price-request"><small>Price</small>on request</div>`
-                  : `<div class="price">${fmt(price)}</div>`;
-  // Compact text-first card; a photo, when there is one, fills the right side. A single size option
-  // (e.g. "Half tray") is shown as the portion, not as a choice.
-  let portion = it.variants && it.variants.length === 1 ? it.variants[0].label : "";
-  const choices = it.variants && it.variants.length > 1;
-  // "Bihon · Big tray" / "Canton · Big tray" → portion "Big tray", choices "Bihon" / "Canton"
-  let chipLabels = choices ? it.variants.map(x => x.label) : [], inline = false;
-  if(choices){
-    const tails = chipLabels.map(l => l.includes(" · ") ? l.slice(l.lastIndexOf(" · ") + 3) : null);
-    if(tails[0] && tails.every(t => t === tails[0])){ portion = tails[0]; inline = true; chipLabels = chipLabels.map(l => l.slice(0, l.lastIndexOf(" · "))); }
+/* Lay the panels into columns (each into the shortest so far), then fill the space left
+   at the foot of the shorter columns with real dish photos, so the sheet ends level. */
+let boardPanels = [], boardCols = 0, boardWidth = 0, boardHot = new Set();
+const BOARD_FALLBACK_PHOTOS = [["media/spread.jpg","A table of Feby's dishes"],["media/Lechon Roll.jpg","Lechon Belly Roll"],["media/grazing.jpg","Grazing table"],
+  ["media/halo-halo.jpg","Halo-Halo"],["media/lasagna.jpg","Lasagna"],["media/cakes.jpg","Moist chocolate cake"],["media/chafing.jpg","Buffet catering"],["media/yakitori.jpg","Grilled skewers"]];
+function boardPhotos(){
+  const live = [];
+  MENU.forEach(c => c.items.forEach(it => {
+    if(it.photo && !/^combo 2$/i.test(it.name.trim())) live.push({ src: it.photo, name: it.name, price: itemPriceText(it) });   // owner asked: not the Combo 2 photo
+  }));
+  if(live.length >= 4){
+    const picked = []; for(let i = 0; i < live.length; i += 3) picked.push(live[i]);
+    const order = picked.concat(live.filter((_, i) => i % 3));
+    // owner's picks lead: Kare-Kare first, then Lechon Roll
+    const lead = [/kare-kare/i, /lechon roll/i].map(rx => order.find(p => rx.test(p.name))).filter(Boolean);
+    return lead.concat(order.filter(p => !lead.includes(p)));
   }
-  const chips = choices ? `<div class="variants">${it.variants.map((x,i)=>`<button class="${i===chosen[it.id]?"on":""}" data-var="${i}" title="${esc(x.label)}">${esc(chipLabels[i])}</button>`).join("")}</div>` : "";
-  return `<article class="item${it.photo?" has-pic":""}" data-id="${it.id}">
-    <div class="body">
-      <div class="item-head">
-        <div class="item-title">
-          ${it.badge?`<span class="badge">${esc(it.badge)}</span>`:""}
-          <h4>${esc(it.name)}</h4>
-          ${inline ? `<div class="pax-row"><div class="pax">${esc(portion)}</div>${chips}</div>` : portion?`<div class="pax">${esc(portion)}</div>`:""}
-          ${it.pax?`<div class="pax">Good for ${esc(it.pax)}</div>`:""}
-        </div>
-      </div>
-      ${it.desc?`<p class="desc">${esc(it.desc)}</p>`:""}
-      ${it.list?`<ul>${it.list.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
-      ${choices && !inline ? chips : ""}
-      <div class="foot">${priceHtml}
-        <button class="add${price==null?" ask":""}" data-add="${it.id}">${price==null?"Add to inquiry":"Add"}</button>
-      </div>
-    </div>
-    ${it.photo?`<button type="button" class="pic-btn" data-photo aria-label="View photo of ${esc(it.name)}"><img class="pic" src="${esc(it.photo)}" alt="${esc(it.name)}" loading="lazy"></button>`:""}
-  </article>`;
+  return BOARD_FALLBACK_PHOTOS.map(([src, name]) => ({ src, name, price: "" }));
+}
+function layoutBoard(){
+  const board = $("#menuRoot .board"); if(!board || !boardPanels.length) return;
+  const w = board.clientWidth, n = w >= 900 ? 4 : w >= 620 ? 3 : w >= 300 ? 2 : 1;
+  if(n === boardCols && Math.abs(w - boardWidth) < 2) return;
+  boardCols = n; boardWidth = w;
+  board.classList.add("laid"); board.classList.remove("filled");
+  board.innerHTML = "";
+  const cols = Array.from({ length: n }, () => { const c = document.createElement("div"); c.className = "bcol"; board.appendChild(c); return c; });
+  boardPanels.forEach(p => cols.reduce((a, b) => b.offsetHeight < a.offsetHeight ? b : a).appendChild(p));
+  const tallest = Math.max(...cols.map(c => c.offsetHeight)), GAP = 14, photos = boardPhotos();
+  let k = 0;
+  cols.forEach(col => {
+    let room = tallest - col.offsetHeight - GAP;
+    while(room >= 110 && k < photos.length){
+      const h = room > 460 ? Math.round(room / 2 - GAP / 2) : room;
+      const ph = photos[k++];
+      col.insertAdjacentHTML("beforeend", `<figure class="bph" style="height:${h}px"><img src="${esc(ph.src)}" alt="${esc(ph.name)}" loading="lazy"><figcaption>${esc(ph.name)}${ph.price?` <b>${esc(ph.price)}</b>`:""}</figcaption></figure>`);
+      room -= h + GAP;
+    }
+  });
+  board.classList.add("filled");   // any gap too small for a photo is taken up by the column's last item
+}
+if(!MENU_PAGE){
+  let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(layoutBoard, 150); });
+  if(document.fonts && document.fonts.ready) document.fonts.ready.then(() => { boardCols = 0; layoutBoard(); });
+}
+const num = n => Number(n).toLocaleString("en-US");
+// panels cycle through the palette: white, soft rose, white, solid rust
+function boardPanel(c, i){
+  const tone = ["light","tint","light","dark"][i % 4];
+  return `<section class="bp bp-${tone}" id="board-${esc(c.id)}" aria-labelledby="bh-${esc(c.id)}">
+    <h3 id="bh-${esc(c.id)}">${esc(c.name)}</h3>
+    ${c.note?`<p class="bp-note">${esc(c.note)}</p>`:""}
+    <ul>${c.items.slice(0, 6).map(boardRow).join("")}</ul>
+    <a class="bp-link" href="menu.html#cat-${esc(c.id)}">${c.items.length > 6 ? `See all ${c.items.length} ${esc(c.name)}` : `Order ${esc(c.name)}`} <span aria-hidden="true">→</span></a>
+  </section>`;
+}
+function boardRow(it){
+  const vs = it.variants || [];
+  const price = vs.length > 1 ? `from ${num(Math.min(...vs.map(v => v.price)))}`
+              : vs.length === 1 ? (vs[0].range || num(vs[0].price))
+              : it.price == null ? "Ask us" : num(it.price);
+  const portion = vs.length === 1 ? vs[0].label : it.pax ? `Good for ${it.pax}` : "";
+  const sub = it.desc || (it.list ? it.list.join(" · ") : "");
+  const opts = vs.length > 1 ? vs.map(v => `${v.label} ${v.range || num(v.price)}`).join(" · ") : "";
+  return `<li class="br${boardHot.has(it.id)?" hot":""}${it.list?" bundle":""}">
+    <div class="br-top"><span class="br-name">${esc(it.name)}</span><span class="br-dots" aria-hidden="true"></span><span class="br-price">${esc(price)}</span></div>
+    ${portion||it.badge?`<div class="br-tags">${portion?`<span class="br-portion">${esc(portion)}</span>`:""}${it.badge?`<span class="br-badge">${esc(it.badge)}</span>`:""}</div>`:""}
+    ${sub?`<p class="br-sub">${esc(sub)}</p>`:""}
+    ${opts?`<p class="br-sub br-opts">${esc(opts)}</p>`:""}
+  </li>`;
 }
 function findItem(id){ for(const c of MENU) for(const it of c.items) if(it.id===id) return it; }
 
-document.addEventListener("click", e=>{
-  const tab = e.target.closest(".tab");
-  if(tab){ document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t===tab));
-           document.getElementById("cat-"+tab.dataset.cat).scrollIntoView({behavior:"smooth"}); return; }
-  const pb = e.target.closest("[data-photo]");
-  if(pb){ const img = pb.querySelector("img"); openPhoto(img.src, img.alt); return; }
-  const vb = e.target.closest("[data-var]");
-  if(vb){ const art = vb.closest(".item"); const it = findItem(art.dataset.id);
-          chosen[it.id] = +vb.dataset.var; art.outerHTML = card(it); return; }
-  const ab = e.target.closest("[data-add]");
-  if(ab){ addToCart(ab.dataset.add); }
-});
-
 /* ---------- cart ---------- */
-function addToCart(id){
+function addToCart(id, qty = 1){
   const it = findItem(id);
+  if(it.variants && chosen[id]==null) chosen[id] = 0;
   const v = it.variants ? it.variants[chosen[id]] : null;
   const key = id + (v?"|"+v.label:"");
   const ex = cart.find(l=>l.key===key);
-  if(ex) ex.qty++;
-  else cart.push({ key, name:it.name, variant:v?v.label:"", price:v?v.price:it.price, range:v&&v.range?v.range:"", qty:1,
+  if(ex) ex.qty += qty;
+  else cart.push({ key, name:it.name, variant:v?v.label:"", price:v?v.price:it.price, range:v&&v.range?v.range:"", qty,
                    list: it.list || [], pax: it.pax || "", cat: (MENU.find(c=>c.items.includes(it))||{}).name || "",
                    photo: it.photo || "", tone: it.tone || "g1" });
-  save(); updateCount(); toast(`${it.name}${v?" · "+v.label:""} added`);
+  save(); updateCount(); toast(`${qty>1?qty+" × ":""}${it.name}${v?" · "+v.label:""} added`);
 }
-function updateCount(){ $("#cartCount").textContent = cart.reduce((s,l)=>s+l.qty,0); }
+function updateCount(){ $("#cartCount").textContent = cart.reduce((s,l)=>s+l.qty,0); syncSide(); }
 function total(){ return cart.reduce((s,l)=>s+(l.price||0)*l.qty,0); }
 const hasEstimates = () => cart.some(l=>l.price==null || l.range);
 
@@ -1742,7 +1770,10 @@ function renderCart(){
   if(!cart.length){
     $("#dBody").innerHTML = `<div class="empty"><img class="mark" src="media/logo.jpg" alt=""><p>Your order is empty.<br>Add something delicious from the menu.</p></div>`;
     $("#dFoot").innerHTML = `<button class="btn btn-dark full" id="browseMenu">Browse the menu</button>`;
-    $("#browseMenu").onclick = () => { closeCart(); document.getElementById("order").scrollIntoView({behavior:"smooth"}); };
+    $("#browseMenu").onclick = () => {
+      closeCart();
+      if(MENU_PAGE) $("#opSearch").focus(); else location.href = "menu.html";
+    };
     return;
   }
   const count = cart.reduce((n,l)=>n+l.qty,0);
@@ -1800,16 +1831,17 @@ $("#dBody").addEventListener("click", e=>{
 function renderCheckout(){
   $("#dTitle").textContent = "Your details";
   const min = tomorrowISO();
+  const pickup = orderMode() === "Pickup";
   $("#dBody").innerHTML = `
     <button class="back" id="back">← Back to order</button>
     <form class="co" id="co">
       <label>Full name<input name="name" required autocomplete="name"></label>
       <label>Mobile / WhatsApp<input name="phone" required type="tel" inputmode="tel" pattern="\\+?[\\d \\(\\)\\-]{9,20}" title="A mobile number, for example 050 123 4567" placeholder="05X XXX XXXX" autocomplete="tel"></label>
       <div class="seg">
-        <input type="radio" name="mode" id="m1" value="Delivery" checked><label for="m1">Delivery</label>
-        <input type="radio" name="mode" id="m2" value="Pickup"><label for="m2">Pickup</label>
+        <input type="radio" name="mode" id="m1" value="Delivery" ${pickup?"":"checked"}><label for="m1">Delivery</label>
+        <input type="radio" name="mode" id="m2" value="Pickup" ${pickup?"checked":""}><label for="m2">Pickup</label>
       </div>
-      <label id="addrWrap">Delivery address<textarea name="address" rows="2" required placeholder="Building, street, area"></textarea></label>
+      <label id="addrWrap"${pickup?' style="display:none"':""}>Delivery address<textarea name="address" rows="2" ${pickup?"":"required"} placeholder="Building, street, area"></textarea></label>
       <div class="row2">
         <label>Date<input name="date" type="date" required min="${min}" value="${min}"></label>
         <label>Time<input name="time" type="time" required value="12:00"></label>
@@ -1824,6 +1856,7 @@ function renderCheckout(){
   $("#back").onclick = renderCart;
   document.querySelectorAll('input[name=mode]').forEach(r=>r.onchange=()=>{
     const delivery = $("#m1").checked;
+    setOrderMode(delivery ? "Delivery" : "Pickup");
     $("#addrWrap").style.display = delivery ? "" : "none";
     const addr = $("#co [name=address]");
     addr.required = delivery;
@@ -1930,6 +1963,210 @@ function sendOrder(){
 
 let tt; function toast(t){ const el=$("#toast"); el.textContent=t; el.classList.add("show"); clearTimeout(tt); tt=setTimeout(()=>el.classList.remove("show"),1800); }
 
+/* ============================================================
+   ORDER PAGE (menu.html) — categories + search bar, dish cards,
+   dish dialog, order panel beside the menu, phone order bar.
+   ============================================================ */
+const MODE_KEY = "febys_mode";
+function orderMode(){ try{ return localStorage.getItem(MODE_KEY) === "Pickup" ? "Pickup" : "Delivery"; }catch(e){ return "Delivery"; } }
+function setOrderMode(m){
+  try{ localStorage.setItem(MODE_KEY, m); }catch(e){}
+  const r = document.querySelector(`input[name=opMode][value="${m}"]`); if(r) r.checked = true;
+}
+let opQuery = "", dishId = null, dishQty = 1, catSpy = null;
+const ICON_PLUS = `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>`;
+const ICON_MINUS = `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg>`;
+
+/* category strip: arrow buttons for mouse users when the chips overflow */
+function updCatArrows(){
+  const bar = $("#opCats"), wrap = bar.parentElement;
+  const over = bar.scrollWidth > bar.clientWidth + 2;
+  wrap.classList.toggle("overflow", over);
+  wrap.classList.toggle("at-start", bar.scrollLeft <= 2);
+  wrap.classList.toggle("at-end", bar.scrollLeft + bar.clientWidth >= bar.scrollWidth - 2);
+}
+
+function itemPriceText(it){
+  const vs = it.variants || [];
+  if(vs.length === 1) return vs[0].range ? `AED ${vs[0].range}` : fmt(vs[0].price);
+  if(vs.length > 1) return `From ${fmt(Math.min(...vs.map(v => v.price)))}`;
+  return it.price == null ? "Price on request" : fmt(it.price);
+}
+function opCard(it){
+  const portion = it.variants && it.variants.length === 1 ? it.variants[0].label : it.pax ? `Good for ${it.pax}` : "";
+  const summary = it.desc || (it.list ? it.list.join(" · ") : "");
+  const price = itemPriceText(it);
+  return `<button type="button" class="op-item${it.photo?" has-pic":""}" data-open="${esc(it.id)}" aria-label="${esc(it.name)}, ${esc(price)}. See details">
+    <span class="op-item-text">
+      <span class="op-item-name">${esc(it.name)}</span>
+      ${portion||it.badge?`<span class="op-tags">${portion?`<span class="pax">${esc(portion)}</span>`:""}${it.badge?`<span class="badge">${esc(it.badge)}</span>`:""}</span>`:""}
+      ${summary?`<span class="op-item-desc">${esc(summary)}</span>`:""}
+      <span class="op-item-price${it.price==null && !it.variants ? " ask" : ""}">${esc(price)}</span>
+    </span>
+    ${it.photo?`<span class="op-item-pic"><img src="${esc(it.photo)}" alt="" loading="lazy"></span>`:""}
+    <span class="op-plus" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span>
+  </button>`;
+}
+function renderOrderPage(){
+  $("#opCats").innerHTML = MENU.map(c => `<a class="op-chip" href="#cat-${esc(c.id)}" data-cat="${esc(c.id)}">${esc(c.name)}</a>`).join("");
+  $("#opMenu").innerHTML = MENU.map(c => `
+    <section class="op-cat" id="cat-${esc(c.id)}" aria-labelledby="h-${esc(c.id)}">
+      <div class="op-cat-head"><h2 id="h-${esc(c.id)}">${esc(c.name)}</h2>${c.note?`<p>${esc(c.note)}</p>`:""}</div>
+      <div class="op-grid">${c.items.map(opCard).join("")}</div>
+    </section>`).join("");
+  applySearch(); watchCats(); syncSide(); updCatArrows();
+  // arriving from a home-page category link (menu.html#cat-…)
+  if(location.hash.startsWith("#cat-") && !renderOrderPage.jumped){
+    const t = document.getElementById(decodeURIComponent(location.hash.slice(1)));
+    if(t){ renderOrderPage.jumped = true; requestAnimationFrame(() => t.scrollIntoView()); }
+  }
+}
+
+/* search */
+function applySearch(){
+  const q = opQuery.trim().toLowerCase();
+  let shown = 0;
+  MENU.forEach(c => {
+    const sec = document.getElementById("cat-" + c.id); if(!sec) return;
+    let n = 0;
+    sec.querySelectorAll(".op-item").forEach(el => {
+      const it = findItem(el.dataset.open);
+      const hay = [it.name, it.desc, it.badge, it.pax, c.name, ...(it.list||[]), ...(it.variants||[]).map(v => v.label)].join(" ").toLowerCase();
+      const ok = !q || hay.includes(q);
+      el.hidden = !ok; if(ok) n++;
+    });
+    sec.hidden = !n;
+    const chip = document.querySelector(`.op-chip[data-cat="${CSS.escape(c.id)}"]`); if(chip) chip.hidden = !n;
+    shown += n;
+  });
+  $("#opEmpty").classList.toggle("hidden", shown > 0);
+  $("#opEmptyQ").textContent = opQuery.trim();
+  $("#opStatus").textContent = q ? `${shown} ${shown === 1 ? "dish" : "dishes"} found` : "";
+  $("#opClear").hidden = !q;
+  updCatArrows();
+}
+function clearSearch(){ $("#opSearch").value = ""; opQuery = ""; applySearch(); $("#opSearch").focus(); }
+
+/* highlight the category being read, and keep its chip in view */
+function setActiveChip(id){
+  document.querySelectorAll(".op-chip").forEach(ch => {
+    const on = ch.dataset.cat === id;
+    ch.classList.toggle("on", on);
+    if(on){
+      ch.setAttribute("aria-current", "true");
+      // keep the active chip clear of the edge fade and the arrow buttons
+      const bar = $("#opCats"), l = ch.offsetLeft - bar.offsetLeft, r = l + ch.offsetWidth, pad = 56;
+      if(l < bar.scrollLeft + pad || r > bar.scrollLeft + bar.clientWidth - pad) bar.scrollTo({ left: Math.max(0, l - pad), behavior: "smooth" });
+    } else ch.removeAttribute("aria-current");
+  });
+}
+function watchCats(){
+  if(catSpy) catSpy.disconnect();
+  if(!("IntersectionObserver" in window)) return;
+  catSpy = new IntersectionObserver(es => {
+    const vis = es.filter(e => e.isIntersecting).sort((a,b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
+    if(vis) setActiveChip(vis.target.id.slice(4));
+  }, { rootMargin: "-170px 0px -55% 0px" });
+  document.querySelectorAll(".op-cat").forEach(s => catSpy.observe(s));
+}
+
+/* dish dialog */
+function openDish(id){
+  const it = findItem(id); if(!it) return;
+  dishId = id; dishQty = 1;
+  if(it.variants && chosen[id] == null) chosen[id] = 0;
+  const one = it.variants && it.variants.length === 1 ? it.variants[0] : null;
+  const many = it.variants && it.variants.length > 1;
+  $("#dish").classList.toggle("no-pic", !it.photo);
+  const tags = [one ? `<span class="pax">${esc(one.label)}</span>` : "", it.pax ? `<span class="pax">Good for ${esc(it.pax)}</span>` : "",
+                it.badge ? `<span class="badge">${esc(it.badge)}</span>` : ""].join("");
+  $("#dishBody").innerHTML = `
+    ${it.photo ? `<div class="dish-pic"><img src="${esc(it.photo)}" alt="${esc(it.name)}"></div>` : ""}
+    <div class="dish-info">
+      <h2 id="dishTitle">${esc(it.name)}</h2>
+      ${tags ? `<div class="op-tags">${tags}</div>` : ""}
+      ${it.desc?`<p class="dish-desc">${esc(it.desc)}</p>`:""}
+      ${it.list?`<div class="dish-incl"><h3>What's included</h3><ul>${it.list.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}
+      ${many?`<fieldset class="dish-opts"><legend>Choose one</legend>${it.variants.map((x,i)=>`
+        <label class="dish-opt"><input type="radio" name="dishVar" value="${i}" ${i===chosen[id]?"checked":""}>
+          <span>${esc(x.label)}</span><b>${x.range?`AED ${esc(x.range)}`:fmt(x.price)}</b></label>`).join("")}</fieldset>`:""}
+      <p class="dish-note" id="dishNote"></p>
+    </div>`;
+  drawDishFoot();
+  const d = $("#dish");
+  if(typeof d.showModal === "function") d.showModal(); else d.setAttribute("open", "");
+  $("#dishBody").scrollTop = 0;
+}
+function drawDishFoot(){
+  const it = findItem(dishId), v = it.variants ? it.variants[chosen[dishId]] : null;
+  const unit = v ? v.price : it.price;
+  $("#dishQty").textContent = dishQty;
+  $("#dishMinus").disabled = dishQty <= 1;
+  $("#dishAdd").textContent = unit == null ? "Add to inquiry"
+    : v && v.range ? `Add to order · approx. AED ${v.range}${dishQty>1?" ×"+dishQty:""}`
+    : `Add to order · ${fmt(unit * dishQty)}`;
+  $("#dishNote").textContent = unit == null ? "Price on request. We'll confirm it on WhatsApp."
+    : v && v.range ? "Final price depends on size. We'll confirm it on WhatsApp." : "";
+}
+function closeDish(){ const d = $("#dish"); if(d.open){ if(typeof d.close === "function") d.close(); else d.removeAttribute("open"); } }
+
+/* order panel beside the menu, and the phone bar */
+function cartLinePrice(l){
+  return l.price == null ? "On request" : l.range ? `approx. AED ${l.range}${l.qty>1?" ×"+l.qty:""}` : fmt(l.price * l.qty);
+}
+function syncSide(){
+  if(!MENU_PAGE) return;
+  const n = cart.reduce((s,l) => s + l.qty, 0);
+  $("#opCartBody").innerHTML = cart.length ? cart.map((l,i) => `
+    <div class="op-line">
+      <div class="op-line-name"><b>${esc(l.name)}</b>${l.variant?`<span>${esc(l.variant)}</span>`:""}</div>
+      <div class="op-line-price">${esc(cartLinePrice(l))}</div>
+      <div class="op-line-ctl">
+        <div class="qty"><button type="button" data-q="${i}" data-d="-1" aria-label="One less ${esc(l.name)}">${ICON_MINUS}</button><span>${l.qty}</span><button type="button" data-q="${i}" data-d="1" aria-label="One more ${esc(l.name)}">${ICON_PLUS}</button></div>
+        <button type="button" class="rm" data-rm="${i}">Remove</button>
+      </div>
+    </div>`).join("")
+    : `<div class="op-cart-empty"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 7h12l-1 13H7L6 7Z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg><p>Your order is empty.</p><p>Choose a dish to add it here.</p></div>`;
+  $("#opCartCount").textContent = n ? `${n} item${n>1?"s":""}` : "";
+  $("#opSubLabel").textContent = hasEstimates() ? "Estimated subtotal" : "Subtotal";
+  $("#opSubtotal").textContent = fmt(total());
+  $("#opCheckout").disabled = !cart.length;
+  $("#opMbar").classList.toggle("show", cart.length > 0);
+  $("#opMbarCount").textContent = n;
+  $("#opMbarTotal").textContent = fmt(total());
+}
+
+if(MENU_PAGE){
+  setOrderMode(orderMode());
+  document.querySelectorAll("input[name=opMode]").forEach(r => r.addEventListener("change", () => setOrderMode(r.value)));
+  $("#opSearch").addEventListener("input", e => { opQuery = e.target.value; applySearch(); });
+  $("#opSearch").addEventListener("keydown", e => { if(e.key === "Escape" && opQuery){ e.preventDefault(); clearSearch(); } });
+  $("#opClear").onclick = clearSearch;
+  $("#opEmptyClear").onclick = clearSearch;
+  $("#opCats").addEventListener("click", e => { const ch = e.target.closest(".op-chip"); if(ch) setActiveChip(ch.dataset.cat); });
+  $("#opCats").addEventListener("scroll", updCatArrows, { passive: true });
+  addEventListener("resize", updCatArrows);
+  document.querySelectorAll("[data-cats-scroll]").forEach(b => b.onclick = () => {
+    const bar = $("#opCats"); bar.scrollBy({ left: +b.dataset.catsScroll * bar.clientWidth * 0.7, behavior: "smooth" });
+  });
+  $("#opMenu").addEventListener("click", e => { const b = e.target.closest("[data-open]"); if(b) openDish(b.dataset.open); });
+  $("#dishBody").addEventListener("change", e => { if(e.target.name === "dishVar"){ chosen[dishId] = +e.target.value; drawDishFoot(); } });
+  $("#dishMinus").onclick = () => { if(dishQty > 1){ dishQty--; drawDishFoot(); } };
+  $("#dishPlus").onclick = () => { if(dishQty < 99){ dishQty++; drawDishFoot(); } };
+  $("#dishAdd").onclick = () => { addToCart(dishId, dishQty); closeDish(); };
+  $("#dishClose").onclick = closeDish;
+  $("#dish").addEventListener("click", e => { if(e.target === e.currentTarget) closeDish(); });   // tap outside the card
+  $("#opCartBody").addEventListener("click", e => {
+    const rm = e.target.closest("[data-rm]"), b = e.target.closest("[data-q]");
+    if(rm) cart.splice(+rm.dataset.rm, 1);
+    else if(b){ const l = cart[+b.dataset.q]; l.qty += +b.dataset.d; if(l.qty <= 0) cart.splice(+b.dataset.q, 1); }
+    else return;
+    save(); updateCount();
+  });
+  $("#opCheckout").onclick = () => { openCart(); renderCheckout(); };
+  $("#opMbarBtn").onclick = openCart;
+}
+
 
 $("#yr").textContent = new Date().getFullYear();
 document.querySelectorAll(".yrs-craft").forEach(el => el.textContent = new Date().getFullYear() - 2011);
@@ -1966,7 +2203,7 @@ async function loadLiveMenu(){
       if(st.whatsapp){
         WHATSAPP = st.whatsapp;
         document.querySelectorAll('a[href*="wa.me/"]').forEach(a => a.href = a.href.replace(/wa\.me\/\d+/, "wa.me/" + st.whatsapp));
-        $("#waLink").textContent = fmtWa(st.whatsapp);
+        if($("#waLink")) $("#waLink").textContent = fmtWa(st.whatsapp);
       }
       INQUIRY_WA = st.inquiry_whatsapp || WHATSAPP;
       if(st.inquiry_whatsapp && $("#cateringLink")){
@@ -2009,7 +2246,7 @@ function renderReviews(list){
   $("#rvNote").classList.toggle("hidden", !list.some(r=>r.is_sample));
   $("#reviews").classList.remove("hidden");
 }
-(async function loadReviews(){
+if($("#reviews")) (async function loadReviews(){
   try{
     const r = await fetch(`${SUPABASE_URL}/rest/v1/reviews?select=reviewer,dish,body,is_sample&active=eq.true&order=sort,id`,
                           { headers:{ apikey:SUPABASE_KEY, "Accept-Profile":"febys" } });
@@ -2092,14 +2329,14 @@ function drawGalleryGrid(){
   } else items.forEach(el => el.classList.add("in"));
   items.forEach(el => el.onclick = () => openLightbox(+el.dataset.g));
 }
-$("#gFilters").addEventListener("click", e => {
+if($("#gFilters")) $("#gFilters").addEventListener("click", e => {
   const b = e.target.closest("[data-f]"); if(!b || b.dataset.f===galleryFilter) return;
   galleryFilter = b.dataset.f; galleryExpanded = false;
   document.querySelectorAll(".g-chip").forEach(c => { const on = c===b; c.classList.toggle("on", on); c.setAttribute("aria-pressed", on); });
   drawGalleryGrid();
 });
 if(gPhone.addEventListener) gPhone.addEventListener("change", () => { if(galleryAll.length) drawGalleryGrid(); });
-$("#gMore").onclick = () => {
+if($("#gMore")) $("#gMore").onclick = () => {
   galleryExpanded = !galleryExpanded; drawGalleryGrid();
   if(!galleryExpanded) $("#gallery").scrollIntoView({behavior:"smooth"});
 };
@@ -2110,7 +2347,7 @@ function showLb(){
   $("#lbCap").textContent = g.caption||"";
   $("#lbCount").textContent = `${lbIndex+1} / ${galleryList.length}`;
 }
-$("#rvToggle").onclick = function(){
+if($("#rvToggle")) $("#rvToggle").onclick = function(){
   const paused = $("#reviews").classList.toggle("paused");
   this.querySelector("span").textContent = paused ? "Play reviews" : "Pause reviews";
 };
@@ -2142,7 +2379,7 @@ document.addEventListener("keydown", e => {
 let lbX = null;
 $("#lightbox").addEventListener("touchstart", e => { lbX = e.touches[0].clientX; }, { passive:true });
 $("#lightbox").addEventListener("touchend", e => { if(lbX==null) return; const dx = e.changedTouches[0].clientX - lbX; if(Math.abs(dx)>40) stepLb(dx<0?1:-1); lbX=null; });
-(async function loadGallery(){
+if($("#gallery")) (async function loadGallery(){
   try{
     const r = await fetch(`${SUPABASE_URL}/rest/v1/gallery?select=path,caption,category&active=eq.true&order=sort,id`, { headers:{ apikey:SUPABASE_KEY, "Accept-Profile":"febys" } });
     if(!r.ok) throw new Error(r.status);
