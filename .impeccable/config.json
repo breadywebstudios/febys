@@ -20,6 +20,33 @@
         ],
         "createdAt": "2026-11-25T07:26:45.354Z",
         "reason": "Claude: rust shadows (.n-tag, .g-chip.on) are offset elevation shadows on light surfaces, not halos; detector reads the hero video as a dark page"
+      },
+      {
+        "rule": "broken-image",
+        "value": "*",
+        "files": [
+          "menu.html"
+        ],
+        "createdAt": "2026-11-25T08:22:18.354Z",
+        "reason": "Claude: #lbImg is the shared lightbox image, given its src by script.js when opened"
+      },
+      {
+        "rule": "dark-glow",
+        "value": "*",
+        "files": [
+          "menu.html"
+        ],
+        "createdAt": "2026-11-25T08:22:19.090Z",
+        "reason": "Claude: rust shadows (.n-tag, .op-mbar-btn) are offset elevation shadows on light surfaces, not halos"
+      },
+      {
+        "rule": "marquee",
+        "value": "*",
+        "files": [
+          "menu.html"
+        ],
+        "createdAt": "2026-11-25T08:23:46.953Z",
+        "reason": "Claude: .rv-track rule comes from the shared stylesheet; menu.html has no reviews marquee"
       }
     ]
   }

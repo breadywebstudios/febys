@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="only light">
+<meta name="theme-color" content="#823a26">
+<title>Order Online · Feby's Kitchen - Restaurant and Cafe</title>
+<meta name="description" content="Order party trays, packages and Filipino favourites from Feby's Kitchen, Al Rigga, Dubai. Build your order online and send it on WhatsApp for delivery or pickup.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&family=Mrs+Saint+Delafield&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<!-- Site switch: turn "Under construction" on/off in site-config.js -->
+<script src="site-config.js"></script>
+<script>
+(function(){
+  var cfg = window.FEBYS_SITE || {}, key = "febys_preview";
+  try{
+    var q = new URLSearchParams(location.search).get("preview");
+    if(q && q === cfg.PREVIEW_KEY) sessionStorage.setItem(key, "1");
+    if(q === "off") sessionStorage.removeItem(key);
+    var preview = sessionStorage.getItem(key) === "1";
+  }catch(e){ var preview = false; }
+  if(cfg.UNDER_CONSTRUCTION && !preview){
+    document.documentElement.style.visibility = "hidden";
+    location.replace("construction.html");
+  }
+})();
+</script>
+</head>
+<body class="menu-page">
+
+<header id="hdr">
+  <div class="wrap nav">
+    <a class="brand" href="index.html" aria-label="Feby's Kitchen, home">
+      <img class="mark" src="media/logo.jpg" width="1468" height="779" alt="">
+      <div><b>Feby's Kitchen</b><small>Restaurant &amp; Cafe</small></div>
+    </a>
+    <nav class="nav-links" id="navLinks" aria-label="Main">
+      <a href="index.html">Home</a>
+      <a href="menu.html" class="on" aria-current="page">Order Now<span aria-hidden="true">🍝</span></a>
+      <a href="index.html#services">Services</a>
+      <a href="index.html#gallery">Gallery</a>
+      <a href="index.html#reviews">Reviews</a>
+      <a href="index.html#contact">Contact</a>
+      <a href="index.html#about">About</a>
+    </nav>
+    <div class="nav-end">
+      <button class="cart-btn" id="openCart" aria-label="Open your order">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 7h12l-1 13H7L6 7Z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>
+        <span class="lbl">Order</span> <span class="count" id="cartCount">0</span>
+      </button>
+      <button class="burger" id="burger" aria-label="Menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+    </div>
+  </div>
+</header>
+
+<div class="notice" id="notice">
+  <div class="wrap">
+    <b class="n-tag"><i aria-hidden="true"></i><span id="noticeTitle">Holiday Packages</span></b>
+    <span class="n-text" id="noticeText">are back and available every day. Advance booking required.</span>
+    <a class="n-link" href="#opMenu">See the menu <span aria-hidden="true">→</span></a>
+  </div>
+</div>
+
+<main>
+  <!-- order details, like a restaurant header on an online-ordering page -->
+  <section class="op-head" aria-labelledby="opTitle">
+    <div class="wrap op-head-in">
+      <div class="op-title">
+        <p class="op-crumb"><a href="index.html">Home</a><span aria-hidden="true">/</span>Order online</p>
+        <h1 id="opTitle">Order online</h1>
+        <p class="op-lede">Party trays, packages and Filipino favourites, cooked fresh for your table.</p>
+      </div>
+      <div class="op-facts">
+        <div class="op-mode" role="radiogroup" aria-label="How you'll get your order">
+          <input type="radio" name="opMode" id="opDelivery" value="Delivery"><label for="opDelivery">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h11v10H3zM14 9h4l3 3v4h-7"/><circle cx="7" cy="17.5" r="1.8"/><circle cx="17" cy="17.5" r="1.8"/></svg>Delivery</label>
+          <input type="radio" name="opMode" id="opPickup" value="Pickup"><label for="opPickup">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8h12l-1 12H7L6 8Z"/><path d="M9 8a3 3 0 0 1 6 0"/></svg>Pickup</label>
+        </div>
+        <ul class="op-meta">
+          <li><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>Advance booking required</li>
+          <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.5"/></svg><a href="https://maps.google.com/?q=Al+Rigga+Corniche+Deira+Dubai" target="_blank" rel="noopener">Al Rigga, Corniche Deira, Dubai</a></li>
+          <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1.3-3.9A8 8 0 1 1 8 19z"/></svg>Confirmed on WhatsApp&nbsp;<a id="waLink" href="https://wa.me/971563267346" target="_blank" rel="noopener">056 326 7346</a></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- categories + search stay in view while scrolling -->
+  <div class="op-bar" id="opBar">
+    <div class="wrap op-bar-in">
+      <div class="op-cats-wrap">
+        <button type="button" class="op-arrow prev" data-cats-scroll="-1" tabindex="-1" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
+        <nav class="op-cats" id="opCats" aria-label="Menu categories"></nav>
+        <button type="button" class="op-arrow next" data-cats-scroll="1" tabindex="-1" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+      </div>
+      <div class="op-search" role="search">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/></svg>
+        <input type="search" id="opSearch" placeholder="Search dishes" aria-label="Search the menu" autocomplete="off" enterkeyhint="search">
+        <button type="button" class="op-clear" id="opClear" aria-label="Clear search" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17"/></svg></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap op-layout">
+    <div class="op-menu">
+      <p class="sr-only" id="opStatus" role="status" aria-live="polite"></p>
+      <div id="opMenu"></div>
+      <div class="op-empty hidden" id="opEmpty">
+        <p>No dishes match “<span id="opEmptyQ"></span>”.</p>
+        <button type="button" class="btn btn-rust" id="opEmptyClear">Clear search</button>
+      </div>
+      <p class="fine" id="footnote">Prices exclude delivery charges. Chafing dish rental is charged separately. Pricing is subject to change based on availability.</p>
+    </div>
+
+    <aside class="op-cart" aria-labelledby="opCartTitle">
+      <div class="op-cart-head"><h2 id="opCartTitle">Your order</h2><span id="opCartCount"></span></div>
+      <div class="op-cart-body" id="opCartBody"></div>
+      <div class="op-cart-foot">
+        <div class="tot"><span id="opSubLabel">Subtotal</span><b id="opSubtotal">AED 0</b></div>
+        <p class="note">Excludes delivery. We confirm availability, delivery fee and the final total on WhatsApp.</p>
+        <button type="button" class="btn btn-rust full" id="opCheckout" disabled>Continue to details</button>
+      </div>
+    </aside>
+  </div>
+</main>
+
+<!-- phones: the order lives behind this bar -->
+<div class="op-mbar" id="opMbar">
+  <button type="button" class="op-mbar-btn" id="opMbarBtn">
+    <span class="count" id="opMbarCount">0</span><span>View order</span><b id="opMbarTotal">AED 0</b>
+  </button>
+</div>
+
+<footer>
+  <div class="wrap foot-in">
+    <img class="f-logo" src="media/logo_trns.png" width="1468" height="779" alt="Feby's logo" loading="lazy">
+    <div class="f-name">Feby's Kitchen - Restaurant and Cafe</div>
+    <div class="f-tag">Homey and Warm Food for You</div>
+    <nav class="f-nav" aria-label="Footer"><a href="index.html">Home</a><a href="menu.html" aria-current="page">Menu</a><a href="index.html#services">Services</a><a href="index.html#gallery">Gallery</a><a href="index.html#reviews">Reviews</a><a href="index.html#contact">Contact</a><a href="index.html#about">About</a></nav>
+    <div class="copyright">© <span id="yr"></span> Feby's Kitchen · Dubai, UAE</div>
+    <a class="admin-link" href="admin.html" target="_blank" rel="nofollow noopener"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Admin login</a>
+  </div>
+</footer>
+
+<!-- dish details -->
+<dialog class="dish" id="dish" aria-labelledby="dishTitle">
+  <button type="button" class="dish-x" id="dishClose" aria-label="Close">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+  </button>
+  <div class="dish-body" id="dishBody"></div>
+  <div class="dish-foot">
+    <div class="qty dish-qty">
+      <button type="button" id="dishMinus" aria-label="One less"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg></button><span id="dishQty" aria-live="polite">1</span><button type="button" id="dishPlus" aria-label="One more"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+    </div>
+    <button type="button" class="btn btn-rust dish-add" id="dishAdd">Add to order</button>
+  </div>
+</dialog>
+
+<div class="lightbox hidden" id="lightbox" role="dialog" aria-modal="true" aria-label="Photo viewer">
+  <span class="lb-count" id="lbCount"></span>
+  <button class="lb-x" id="lbClose" aria-label="Close">×</button>
+  <button class="lb-nav lb-prev" id="lbPrev" aria-label="Previous photo">‹</button>
+  <figure><img id="lbImg" alt=""><figcaption id="lbCap"></figcaption></figure>
+  <button class="lb-nav lb-next" id="lbNext" aria-label="Next photo">›</button>
+</div>
+
+<div class="overlay" id="overlay"></div>
+<aside class="drawer" id="drawer" aria-label="Your order" inert>
+  <div class="dh"><h3 id="dTitle">Your order</h3><button class="x" id="closeCart" aria-label="Close">×</button></div>
+  <div class="db" id="dBody"></div>
+  <div class="df" id="dFoot"></div>
+</aside>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="script.js"></script>
+<script src="track.js" defer></script>
+</body>
+</html>
