@@ -1024,14 +1024,16 @@ a.tab{text-decoration:none}
 .bp-light{background:#f8f1e8}
 .bp-tint{background:#efdcd3}
 .bp-dark{background:linear-gradient(160deg,var(--rust),var(--rust-d));color:var(--cream)}
-.bp h3{display:inline-block;padding:4px 10px 5px;border-radius:6px;background:var(--rust);font-family:var(--display);font-weight:500;font-size:19px;line-height:1.05;letter-spacing:-.005em;color:var(--cream)}
-.bp-dark h3{background:var(--cream);color:var(--rust)}
+.bp h3{position:relative;display:inline-block;padding:0 0 6px;font-family:var(--display);font-weight:500;font-size:20px;line-height:1.05;letter-spacing:-.005em;color:var(--rust)}
+.bp h3::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;border-radius:2px;background:var(--rust);box-shadow:0 1px 6px rgba(130,58,38,.45),0 2px 12px rgba(214,120,78,.3);transition:box-shadow .25s ease}
+.bp-dark h3{color:var(--cream)}
+.bp-dark h3::after{background:#f3c9a8;box-shadow:0 1px 6px rgba(243,201,168,.6),0 2px 14px rgba(243,201,168,.35)}
+.bp:hover h3::after{box-shadow:0 1px 8px rgba(130,58,38,.6),0 2px 16px rgba(214,120,78,.45)}
+.bp-dark:hover h3::after{box-shadow:0 1px 8px rgba(243,201,168,.8),0 2px 18px rgba(243,201,168,.5)}
 .bp-note{margin-top:1px;font-size:12px;font-style:italic;color:var(--ink-2)}
 .bp-dark .bp-note{color:rgba(246,239,232,.86)}
 .bp ul{list-style:none;margin-top:6px}
-.br{padding:5px 0;border-top:1px dashed rgba(130,58,38,.22)}
-.br:first-child{border-top:0}
-.bp-dark .br{border-color:rgba(246,239,232,.3)}
+.br{padding:5px 0}
 .br-top{display:flex;align-items:baseline;gap:6px}
 .br-name{min-width:0;font-family:var(--sans);font-weight:700;font-size:12px;line-height:1.25;letter-spacing:.04em;text-transform:uppercase;color:var(--ink)}
 .br-dots{flex:1;min-width:10px;border-bottom:1.5px dotted rgba(130,58,38,.35);transform:translateY(-3px)}
@@ -1047,8 +1049,7 @@ a.tab{text-decoration:none}
 .bp-dark .br-sub{color:rgba(246,239,232,.86)}
 .bp-dark .br-badge{background:var(--cream);color:var(--rust)}
 /* a highlighted dish, boxed like a special on a printed menu */
-.br.hot{margin:3px -7px;padding:6px 7px;border:0;border-radius:6px;background:var(--rust)}
-.br.hot + .br{border-top:0}
+.br.hot{margin:3px -7px;padding:6px 7px;border-radius:6px;background:var(--rust)}
 .br.hot .br-name,.br.hot .br-price{color:var(--cream)}
 .br.hot .br-dots{border-color:rgba(246,239,232,.45)}
 .br.hot .br-portion{color:#f3c9a8}
@@ -1069,7 +1070,7 @@ a.tab{text-decoration:none}
   .clip{top:-54px;width:150px;height:92px;margin-left:-75px}
   .board{columns:2 160px;column-gap:8px}
   .bp{margin-bottom:8px;padding:11px 10px 8px}
-  .bp h3{font-size:18px}
+  .bp h3{font-size:19px}
   .br-name{font-size:11.5px;letter-spacing:.02em}
   .br-price{font-size:12px}
   .br-sub{-webkit-line-clamp:1}
@@ -1100,7 +1101,7 @@ a.tab{text-decoration:none}
 .bp-dark:focus-within{outline-color:var(--rust-d)}
 .bp-link:focus-visible{outline:none}
 @media (prefers-reduced-motion:reduce){
-  .bp,.bp h3{transition:none}
+  .bp,.bp h3,.bp h3::after{transition:none}
   .bp:hover{transform:none}
   .bp:hover h3{transform:none}
 }
