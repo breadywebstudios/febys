@@ -1711,7 +1711,7 @@ function boardRow(it){
               : vs.length === 1 ? (vs[0].range || num(vs[0].price))
               : it.price == null ? "Ask us" : num(it.price);
   const portion = vs.length === 1 ? vs[0].label : it.pax ? `Good for ${it.pax}` : "";
-  const sub = it.desc || (it.list ? it.list.join(" · ") : "");
+  const sub = it.list ? it.list.join(" · ") : "";   // the board stays compact: bundles list contents, dish descriptions live on the full menu
   const opts = vs.length > 1 ? vs.map(v => `${v.label} ${v.range || num(v.price)}`).join(" · ") : "";
   return `<li class="br${boardHot.has(it.id)?" hot":""}${it.list?" bundle":""}">
     <div class="br-top"><span class="br-name">${esc(it.name)}</span><span class="br-dots" aria-hidden="true"></span><span class="br-price">${esc(price)}</span></div>
@@ -1994,7 +1994,7 @@ function itemPriceText(it){
 }
 function opCard(it){
   const portion = it.variants && it.variants.length === 1 ? it.variants[0].label : it.pax ? `Good for ${it.pax}` : "";
-  const summary = it.desc || (it.list ? it.list.join(" · ") : "");
+  const summary = it.list ? it.list.join(" · ") : (it.desc || "");
   const price = itemPriceText(it);
   return `<button type="button" class="op-item${it.photo?" has-pic":""}" data-open="${esc(it.id)}" aria-label="${esc(it.name)}, ${esc(price)}. See details">
     <span class="op-item-text">
