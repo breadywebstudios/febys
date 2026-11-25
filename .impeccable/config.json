@@ -1,0 +1,26 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "broken-image",
+        "value": "*",
+        "files": [
+          "index.html"
+        ],
+        "createdAt": "2026-11-25T07:26:39.019Z",
+        "reason": "Claude: #lbImg is the lightbox image, given its src by script.js when the viewer opens; never rendered empty"
+      },
+      {
+        "rule": "dark-glow",
+        "value": "*",
+        "files": [
+          "index.html"
+        ],
+        "createdAt": "2026-11-25T07:26:45.354Z",
+        "reason": "Claude: rust shadows (.n-tag, .g-chip.on) are offset elevation shadows on light surfaces, not halos; detector reads the hero video as a dark page"
+      }
+    ]
+  }
+}

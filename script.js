@@ -1592,7 +1592,7 @@ let MENU = [
   { id:"specials", name:"Specials", note:"Lechon & cochinillo", items:[
     { id:"coch", name:"Cochinillo", tone:"g3", badge:"Whole roast pig", desc:"Whole roasted suckling pig with crackling skin. Choose the size.",
       variants:[{label:"8 kilos",price:900},{label:"9 kilos",price:1000},{label:"10 kilos",price:1100},{label:"11 kilos",price:1200}] },
-    { id:"ulo", name:"Lechon Ulo", tone:"g3", desc:"Roasted lechon head. Final price depends on size — we'll confirm on WhatsApp.",
+    { id:"ulo", name:"Lechon Ulo", tone:"g3", desc:"Roasted lechon head. Final price depends on size; we'll confirm it on WhatsApp.",
       variants:[{label:"Half",price:150,range:"150–200"},{label:"Whole",price:300,range:"300–350"}] },
   ]},
   { id:"trays", name:"Food Trays", note:"Ask us for today's prices", items:[
@@ -1605,6 +1605,28 @@ let MENU = [
 /* ---------- state ---------- */
 let cart = [];
 try { cart = JSON.parse(localStorage.getItem("febys_cart")||"[]"); } catch(e){ cart=[]; }
+// drop anything malformed left over from an older version of the site
+if(!Array.isArray(cart)) cart = [];
+cart = cart.filter(l => l && typeof l.name === "string" && Number.isFinite(l.qty) && l.qty > 0);
+// tomorrow's date in the visitor's own time zone (toISOString alone is UTC, which is "today" in Dubai after 8pm)
+const tomorrowISO = () => { const d = new Date(Date.now() + 86400000); return new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().slice(0,10); };
+// trim text fields, mark empty/invalid required ones, focus the first; returns true when all good
+function checkFields(form){
+  let first = null;
+  form.querySelectorAll("input:not([type=radio]):not([type=checkbox]):not([type=date]):not([type=time]),textarea").forEach(el => { el.value = el.value.trim(); });
+  form.querySelectorAll("[required]").forEach(el => {
+    const bad = !el.value || !el.checkValidity();
+    el.classList.toggle("bad", bad); el.setAttribute("aria-invalid", bad);
+    if(bad && !first) first = el;
+  });
+  if(first){ first.focus(); return false; }
+  return true;
+}
+// clear a field's error mark as soon as it's fixed (inquiry form and checkout)
+document.addEventListener("input", e => {
+  const el = e.target;
+  if(el.classList && el.classList.contains("bad") && el.value.trim() && el.checkValidity()){ el.classList.remove("bad"); el.setAttribute("aria-invalid", false); }
+});
 const save = () => { try{ localStorage.setItem("febys_cart", JSON.stringify(cart)); }catch(e){} };
 const chosen = {}; // selected variant per item
 const fmt = n => "AED " + n.toLocaleString("en-US");
@@ -1689,9 +1711,31 @@ function updateCount(){ $("#cartCount").textContent = cart.reduce((s,l)=>s+l.qty
 function total(){ return cart.reduce((s,l)=>s+(l.price||0)*l.qty,0); }
 const hasEstimates = () => cart.some(l=>l.price==null || l.range);
 
-function openCart(){ $("#overlay").classList.add("show"); $("#drawer").classList.add("show"); renderCart(); }
-function closeCart(){ $("#overlay").classList.remove("show"); $("#drawer").classList.remove("show"); }
+// keep Tab / Shift+Tab inside an open dialog or drawer
+function trapTab(root, e){
+  const f = [...root.querySelectorAll('a[href],button:not([disabled]),input,select,textarea,[tabindex]:not([tabindex="-1"])')]
+    .filter(el => el.offsetParent !== null);
+  if(!f.length) return;
+  const first = f[0], last = f[f.length-1];
+  if(e.shiftKey && document.activeElement === first){ e.preventDefault(); last.focus(); }
+  else if(!e.shiftKey && document.activeElement === last){ e.preventDefault(); first.focus(); }
+}
+let cartReturn = null;
+function openCart(){
+  cartReturn = document.activeElement;
+  $("#overlay").classList.add("show"); const d = $("#drawer"); d.classList.add("show"); d.inert = false;
+  renderCart(); $("#closeCart").focus();
+}
+function closeCart(){
+  $("#overlay").classList.remove("show"); const d = $("#drawer"); d.classList.remove("show"); d.inert = true;
+  if(cartReturn && document.contains(cartReturn)) cartReturn.focus(); cartReturn = null;
+}
 $("#openCart").onclick = openCart; $("#closeCart").onclick = closeCart; $("#overlay").onclick = closeCart;
+document.addEventListener("keydown", e => {
+  const d = $("#drawer");
+  if(!d.classList.contains("show") || !$("#lightbox").classList.contains("hidden")) return;
+  if(e.key === "Escape") closeCart(); else if(e.key === "Tab") trapTab(d, e);
+});
 
 function renderCart(){
   $("#dTitle").textContent = "Your order";
@@ -1755,17 +1799,17 @@ $("#dBody").addEventListener("click", e=>{
 
 function renderCheckout(){
   $("#dTitle").textContent = "Your details";
-  const min = new Date(Date.now()+86400000).toISOString().slice(0,10);
+  const min = tomorrowISO();
   $("#dBody").innerHTML = `
     <button class="back" id="back">← Back to order</button>
     <form class="co" id="co">
       <label>Full name<input name="name" required autocomplete="name"></label>
-      <label>Mobile / WhatsApp<input name="phone" required type="tel" placeholder="05X XXX XXXX" autocomplete="tel"></label>
+      <label>Mobile / WhatsApp<input name="phone" required type="tel" inputmode="tel" pattern="\\+?[\\d \\(\\)\\-]{9,20}" title="A mobile number, for example 050 123 4567" placeholder="05X XXX XXXX" autocomplete="tel"></label>
       <div class="seg">
         <input type="radio" name="mode" id="m1" value="Delivery" checked><label for="m1">Delivery</label>
         <input type="radio" name="mode" id="m2" value="Pickup"><label for="m2">Pickup</label>
       </div>
-      <label id="addrWrap">Delivery address<textarea name="address" rows="2" placeholder="Building, street, area"></textarea></label>
+      <label id="addrWrap">Delivery address<textarea name="address" rows="2" required placeholder="Building, street, area"></textarea></label>
       <div class="row2">
         <label>Date<input name="date" type="date" required min="${min}" value="${min}"></label>
         <label>Time<input name="time" type="time" required value="12:00"></label>
@@ -1779,7 +1823,11 @@ function renderCheckout(){
     <button class="btn btn-dark full" id="send">Send order on WhatsApp</button>`;
   $("#back").onclick = renderCart;
   document.querySelectorAll('input[name=mode]').forEach(r=>r.onchange=()=>{
-    $("#addrWrap").style.display = $("#m1").checked ? "" : "none";
+    const delivery = $("#m1").checked;
+    $("#addrWrap").style.display = delivery ? "" : "none";
+    const addr = $("#co [name=address]");
+    addr.required = delivery;
+    if(!delivery){ addr.classList.remove("bad"); addr.setAttribute("aria-invalid", false); }
   });
   $("#send").onclick = sendOrder;
 }
@@ -1803,7 +1851,8 @@ function openWhatsApp(kind, msg){
   latestNumbers().then(() => {
     const phone = kind === "inquiry" ? (INQUIRY_WA || WHATSAPP) : WHATSAPP;
     const url = `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(msg)}`;
-    if(win && !win.closed) win.location.href = url; else window.open(url, "_blank");
+    // pop-up blocked: go to WhatsApp in this tab rather than losing the message
+    if(win && !win.closed) win.location.href = url; else location.href = url;
   });
 }
 function prettyDate(iso, time){
@@ -1826,9 +1875,9 @@ function saveOrder(order){
 }
 function sendOrder(){
   const f = $("#co");
-  if(!f.reportValidity()) return;
+  if(!checkFields(f)){ f.reportValidity(); return; }
+  if(!cart.length){ renderCart(); return; }
   const d = Object.fromEntries(new FormData(f));
-  if(d.mode==="Delivery" && !d.address.trim()){ toast("Please add a delivery address"); return; }
 
   const ref = "FB-" + new Date().toISOString().slice(5,10).replace("-","") + "-" + Math.floor(1000 + Math.random()*9000);
   const line = "━━━━━━━━━━━━━━━";
@@ -1883,6 +1932,7 @@ let tt; function toast(t){ const el=$("#toast"); el.textContent=t; el.classList.
 
 
 $("#yr").textContent = new Date().getFullYear();
+document.querySelectorAll(".yrs-craft").forEach(el => el.textContent = new Date().getFullYear() - 2011);
 renderMenu(); updateCount();
 
 /* ---------- live menu from the admin ---------- */
@@ -2017,7 +2067,7 @@ function renderGallery(list){
   const count = id => id==="all" ? galleryAll.length : galleryAll.filter(g => g.cat===id).length;
   const chips = [{id:"all",label:"All"}, ...GALLERY_CATEGORIES].filter(c => c.id==="all" || count(c.id));
   $("#gFilters").innerHTML = chips.map(c =>
-    `<button class="g-chip${c.id===galleryFilter?" on":""}" role="tab" aria-selected="${c.id===galleryFilter}" data-f="${c.id}">${esc(c.label)} <span>${count(c.id)}</span></button>`).join("");
+    `<button type="button" class="g-chip${c.id===galleryFilter?" on":""}" aria-pressed="${c.id===galleryFilter}" data-f="${c.id}">${esc(c.label)} <span>${count(c.id)}</span></button>`).join("");
   drawGalleryGrid();
 }
 function drawGalleryGrid(){
@@ -2045,7 +2095,7 @@ function drawGalleryGrid(){
 $("#gFilters").addEventListener("click", e => {
   const b = e.target.closest("[data-f]"); if(!b || b.dataset.f===galleryFilter) return;
   galleryFilter = b.dataset.f; galleryExpanded = false;
-  document.querySelectorAll(".g-chip").forEach(c => { const on = c===b; c.classList.toggle("on", on); c.setAttribute("aria-selected", on); });
+  document.querySelectorAll(".g-chip").forEach(c => { const on = c===b; c.classList.toggle("on", on); c.setAttribute("aria-pressed", on); });
   drawGalleryGrid();
 });
 if(gPhone.addEventListener) gPhone.addEventListener("change", () => { if(galleryAll.length) drawGalleryGrid(); });
@@ -2060,11 +2110,20 @@ function showLb(){
   $("#lbCap").textContent = g.caption||"";
   $("#lbCount").textContent = `${lbIndex+1} / ${galleryList.length}`;
 }
-function openLightbox(i){ lbIndex = i; showLb(); $("#lightbox").classList.remove("hidden"); document.body.style.overflow="hidden"; $("#lbClose").focus(); }
-function closeLightbox(){ $("#lightbox").classList.add("hidden"); $("#lightbox").classList.remove("single"); document.body.style.overflow=""; }
+$("#rvToggle").onclick = function(){
+  const paused = $("#reviews").classList.toggle("paused");
+  this.querySelector("span").textContent = paused ? "Play reviews" : "Pause reviews";
+};
+let lbReturn = null;
+function openLightbox(i){ lbReturn = document.activeElement; lbIndex = i; showLb(); $("#lightbox").classList.remove("hidden"); document.body.style.overflow="hidden"; $("#lbClose").focus(); }
+function closeLightbox(){
+  $("#lightbox").classList.add("hidden"); $("#lightbox").classList.remove("single"); document.body.style.overflow="";
+  if(lbReturn && document.contains(lbReturn)) lbReturn.focus(); lbReturn = null;
+}
 // one photo (e.g. a menu dish) in the same viewer — no arrows or counter
 function openPhoto(src, caption){
   const lb = $("#lightbox"), img = $("#lbImg");
+  lbReturn = document.activeElement;
   img.classList.remove("swap"); img.src = src; img.alt = caption || "";
   $("#lbCap").textContent = caption || "";
   lb.classList.add("single"); lb.classList.remove("hidden");
@@ -2078,6 +2137,7 @@ $("#lightbox").addEventListener("click", e => { if(e.target.id==="lightbox") clo
 document.addEventListener("keydown", e => {
   if($("#lightbox").classList.contains("hidden")) return;
   if(e.key==="Escape") closeLightbox(); if(e.key==="ArrowRight") stepLb(1); if(e.key==="ArrowLeft") stepLb(-1);
+  if(e.key==="Tab") trapTab($("#lightbox"), e);
 });
 let lbX = null;
 $("#lightbox").addEventListener("touchstart", e => { lbX = e.touches[0].clientX; }, { passive:true });
@@ -2094,6 +2154,9 @@ $("#lightbox").addEventListener("touchend", e => { if(lbX==null) return; const d
 const burger = $("#burger"), navLinks = $("#navLinks");
 burger.onclick = () => { const open = !navLinks.classList.contains("open"); navLinks.classList.toggle("open", open); burger.setAttribute("aria-expanded", open); };
 navLinks.addEventListener("click", e => { if(e.target.closest("a")){ navLinks.classList.remove("open"); burger.setAttribute("aria-expanded", false); } });
+document.addEventListener("keydown", e => {
+  if(e.key === "Escape" && navLinks.classList.contains("open")){ navLinks.classList.remove("open"); burger.setAttribute("aria-expanded", false); burger.focus(); }
+});
 if("IntersectionObserver" in window){
   const links = [...navLinks.querySelectorAll("a")];
   const ids = ["home","order","services","gallery","reviews","contact","about"], seen = new Set();
@@ -2118,13 +2181,13 @@ if("IntersectionObserver" in window){
 /* ---------- catering inquiry → WhatsApp ---------- */
 (function(){
   const f = $("#planForm"); if(!f) return;
-  const min = new Date(Date.now()+86400000).toISOString().slice(0,10);
-  $("#planDate").min = min;
+  $("#planDate").min = tomorrowISO();
+  let sending = false;
   f.addEventListener("submit", e => {
     e.preventDefault();
-    let ok = true;
-    f.querySelectorAll("[required]").forEach(el => { const bad = !el.value.trim() || !el.checkValidity(); el.classList.toggle("bad", bad); if(bad) ok = false; });
-    if(!ok){ toast("Please complete the highlighted fields"); return; }
+    if(sending) return;
+    if(!checkFields(f)){ toast("Please complete the highlighted fields"); return; }
+    sending = true; setTimeout(() => sending = false, 3000);   // stop double taps opening two WhatsApp tabs
     const d = Object.fromEntries(new FormData(f));
     const msg = [
       `*CATERING INQUIRY · FEBY'S*`,
